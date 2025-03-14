@@ -11,6 +11,21 @@ import { type Activity } from './types/Activity';
 import { type Attachment } from './types/Attachment';
 import { type ActivityId, type DirectLineJSBotConnection } from './types/DirectLineJSBotConnection';
 
+const ConnectionStatus = {
+  /** The status when the DirectLine object is first created/constructed */
+  Uninitialized: 0,
+  /** Currently trying to connect to the conversation */
+  Connecting: 1,
+  /** Successfully connected to the conversation. Connection is healthy so far as we know. */
+  Online: 2,
+  /** Last operation errored out with an expired token. Possibly waiting for someone to supply a new one. */
+  ExpiredToken: 3,
+  /** The initial attempt to connect to the conversation failed. No recovery possible. */
+  FailedToConnect: 4,
+  /** The bot ended the conversation */
+  Ended: 5                       
+} as const;
+
 function once(fn: () => Promise<void>): () => Promise<void>;
 function once(fn: () => void): () => void;
 
@@ -43,12 +58,12 @@ export default function toDirectLineJS(halfDuplexChatAdapter: TurnGenerator): Di
 
   const activityDeferredObservable = new DeferredObservable<Activity>(observer => {
     (async function () {
-      connectionStatusDeferredObservable.next(0);
-      connectionStatusDeferredObservable.next(1);
+      connectionStatusDeferredObservable.next(ConnectionStatus.Uninitialized);
+      connectionStatusDeferredObservable.next(ConnectionStatus.Connecting);
 
       let turnGenerator: TurnGenerator = halfDuplexChatAdapter;
       let handleAcknowledgementOnce: () => Promise<void> | void = once(async () => {
-        connectionStatusDeferredObservable.next(2);
+        connectionStatusDeferredObservable.next(ConnectionStatus.Online);
         await 0; // HACK: Web Chat need a spare cycle between connectionStatus$ change and activity$ subscription.
       });
 
@@ -121,7 +136,7 @@ export default function toDirectLineJS(halfDuplexChatAdapter: TurnGenerator): Di
       } catch (error) {
         console.error('Failed to communicate with the chat adapter.', error);
 
-        connectionStatusDeferredObservable.next(4);
+        connectionStatusDeferredObservable.next(ConnectionStatus.FailedToConnect);
       }
     })();
   });
