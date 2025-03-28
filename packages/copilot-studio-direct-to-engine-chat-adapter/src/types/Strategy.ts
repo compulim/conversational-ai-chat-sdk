@@ -10,4 +10,9 @@ export type StrategyRequestInit = {
 export type Strategy = {
   prepareExecuteTurn(): Promise<StrategyRequestInit>;
   prepareStartNewConversation(): Promise<StrategyRequestInit>;
+
+  /**
+   * (This API is experimental and is expected to go away with a new replacement before General Availability.)
+   */
+  experimental_prepareSubscribeActivities?: (() => Promise<StrategyRequestInit>) | undefined;
 };

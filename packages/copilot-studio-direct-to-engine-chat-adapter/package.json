@@ -66,16 +66,16 @@
     "prettier": "^3.0.0",
     "tsup": "^8.0.1",
     "type-fest": "^4.10.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.8.2"
   },
   "dependencies": {
     "base64-arraybuffer": "^1.0.2",
     "core-js-pure": "^3.37.1",
     "eventsource-parser": "^1.1.1",
-    "iter-fest": "^0.2.1",
+    "iter-fest": "^0.2.2-main.5f5a121",
     "on-error-resume-next": "^2.0.1",
     "p-retry": "^6.2.0",
     "uuid": "^9.0.1",
-    "valibot": "^0.37.0"
+    "valibot": "^1.0.0"
   }
 }

@@ -20,6 +20,10 @@ declare global {
       toDirectLineJS: typeof toDirectLineJS;
     };
   }
+
+  const process: {
+    env: { npm_package_version: string | undefined };
+  };
 }
 
 window.CopilotStudioDirectToEngineChatAdapter = {

@@ -1,4 +1,5 @@
 import {
+  boolean,
   function_,
   instance,
   literal,
@@ -12,7 +13,7 @@ import {
   type InferOutput
 } from 'valibot';
 
-import { type Strategy } from './types/Strategy';
+import { type Strategy, type StrategyRequestInit } from './types/Strategy';
 import { type Transport } from './types/Transport';
 
 type DeltaToken = InferOutput<typeof deltaTokenSchema>;
@@ -38,6 +39,15 @@ const testCanvasBotStrategyInitSchema = object({
   islandURI: instance(URL, 'islandURI must be instance of URL'),
   transport: union([literal('auto'), literal('rest')], 'transport must be either "auto" or "rest"')
 });
+
+const testCanvasBotStrategyWithExperimentalInitSchema = object({
+  ...testCanvasBotStrategyInitSchema.entries,
+  experimental_enableSubscribeActivities: optional(
+    boolean('experimental_enableSubscribeActivities must be a boolean'),
+    false
+  )
+});
+
 const tokenSchema = string('getToken must return a string');
 
 export default class TestCanvasBotStrategy implements Strategy {
@@ -51,12 +61,29 @@ export default class TestCanvasBotStrategy implements Strategy {
     this.#getDeltaToken = async () => parse(deltaTokenSchema, await getDeltaToken?.());
     this.#getToken = async () => parse(tokenSchema, await getToken());
     this.#transport = transport;
+
+    const { experimental_enableSubscribeActivities } = parse(testCanvasBotStrategyWithExperimentalInitSchema, init);
+
+    if (experimental_enableSubscribeActivities) {
+      this.experimental_prepareSubscribeActivities = async () => {
+        const deltaToken = await this.#getDeltaToken();
+
+        return {
+          baseURL: this.#baseURL,
+          body: deltaToken ? { deltaToken } : undefined,
+          headers: await this.#getHeaders(),
+          transport: this.#transport
+        };
+      };
+    }
   }
 
   #baseURL: URL;
   #getDeltaToken: () => Promise<DeltaToken>;
   #getToken: () => Promise<Token>;
   #transport: Transport;
+
+  experimental_prepareSubscribeActivities: (() => Promise<StrategyRequestInit>) | undefined;
 
   async #getHeaders() {
     return new Headers({ authorization: `Bearer ${await this.#getToken()}` });

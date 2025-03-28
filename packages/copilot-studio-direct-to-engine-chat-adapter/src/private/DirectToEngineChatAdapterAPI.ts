@@ -2,7 +2,7 @@ import { EventSourceParserStream, type ParsedEvent } from 'eventsource-parser/st
 import { asyncGeneratorWithLastValue, readableStreamValues } from 'iter-fest';
 import pRetry from 'p-retry';
 
-import { maxValue, minValue, number, pipe, safeParse } from 'valibot';
+import { instance, maxValue, minValue, number, object, optional, pipe, safeParse, type InferOutput } from 'valibot';
 import { type Activity } from '../types/Activity';
 import { type Strategy } from '../types/Strategy';
 import { type Telemetry } from '../types/Telemetry';
@@ -31,6 +31,8 @@ const CORRELATION_ID_HEADER_NAME = 'x-ms-correlation-id';
 const DEFAULT_RETRY_COUNT = 4; // Will call 5 times.
 const MAX_CONTINUE_TURN = 999;
 const RETRY_AFTER_SCHEMA = pipe(number(), minValue(100), maxValue(60_000));
+
+const experimental_subscribeActivitiesInitSchema = optional(object({ signal: optional(instance(AbortSignal)) }), {});
 
 export default class DirectToEngineChatAdapterAPI implements HalfDuplexChatAdapterAPI {
   // NOTES: This class must work over RPC and cross-domain:
@@ -83,7 +85,12 @@ export default class DirectToEngineChatAdapterAPI implements HalfDuplexChatAdapt
 
         const { baseURL, body, headers, transport } = await this.#strategy.prepareStartNewConversation();
 
-        yield* this.#post(baseURL, { body, headers, initialBody: { emitStartConversationEvent, locale }, transport });
+        yield* this.#post(baseURL, {
+          body,
+          headers,
+          initialBody: { emitStartConversationEvent, locale },
+          transport
+        });
       } finally {
         this.#busy = false;
       }
@@ -113,9 +120,73 @@ export default class DirectToEngineChatAdapterAPI implements HalfDuplexChatAdapt
 
         const { baseURL, body, headers, transport } = await this.#strategy.prepareExecuteTurn();
 
-        yield* this.#post(baseURL, { body, headers, initialBody: { activity }, transport });
+        yield* this.#post(baseURL, {
+          body,
+          headers,
+          initialBody: { activity },
+          transport
+        });
       } finally {
         this.#busy = false;
+      }
+    }.call(this);
+  }
+
+  #experimental_subscribed: boolean = false;
+
+  /**
+   * (This API is experimental and is expected to go away with a new replacement before General Availability.)
+   */
+  public experimental_subscribeActivities(
+    init: InferOutput<typeof experimental_subscribeActivitiesInitSchema>
+  ): AsyncIterableIterator<Activity> {
+    if (this.#experimental_subscribed) {
+      const error = new Error('Another operation is in progress.');
+
+      this.#telemetry?.trackException(error, {
+        handledAt: 'DirectToEngineChatAdapterAPI.experimental_subscribeActivities'
+      });
+
+      throw error;
+    }
+
+    const { experimental_prepareSubscribeActivities } = this.#strategy;
+
+    if (!experimental_prepareSubscribeActivities) {
+      const error = new Error('This strategy does not support experimental_prepareSubscribeActivities.');
+
+      this.#telemetry?.trackException(error, {
+        handledAt: 'DirectToEngineChatAdapterAPI.experimental_subscribeActivities'
+      });
+
+      throw error;
+    }
+
+    this.#experimental_subscribed = true;
+
+    return async function* (this: DirectToEngineChatAdapterAPI) {
+      try {
+        if (!this.#conversationId) {
+          const error = new Error(`startNewConversation() must be called before experimental_subscribeActivities().`);
+
+          this.#telemetry?.trackException(error, {
+            handledAt: 'DirectToEngineChatAdapterAPI.experimental_subscribeActivities'
+          });
+
+          throw error;
+        }
+
+        const { baseURL, body, headers } = await experimental_prepareSubscribeActivities();
+
+        yield* this.#post(baseURL, {
+          body,
+          headers,
+          signal: init.signal,
+          subPath: 'subscribe',
+          transport: 'auto' // /subscribe only works over SSE.
+        });
+      } finally {
+        this.#experimental_subscribed = false;
       }
     }.call(this);
   }
@@ -126,11 +197,15 @@ export default class DirectToEngineChatAdapterAPI implements HalfDuplexChatAdapt
       body,
       headers,
       initialBody,
+      signal,
+      subPath,
       transport
     }: {
       body?: Record<string, unknown> | undefined;
       headers?: Headers | undefined;
       initialBody?: Record<string, unknown> | undefined;
+      signal?: AbortSignal | undefined;
+      subPath?: string | undefined;
       transport?: Transport | undefined;
     }
   ): AsyncIterableIterator<Activity> {
@@ -159,11 +234,18 @@ export default class DirectToEngineChatAdapterAPI implements HalfDuplexChatAdapt
             correlationId && requestHeaders.set(CORRELATION_ID_HEADER_NAME, correlationId);
 
             currentResponse = await fetch(
-              resolveURLWithQueryAndHash(baseURL, 'conversations', this.#conversationId, isContinueTurn && 'continue'),
+              resolveURLWithQueryAndHash(
+                baseURL,
+                'conversations',
+                this.#conversationId,
+                subPath,
+                isContinueTurn && 'continue'
+              ),
               {
                 body: JSON.stringify(isContinueTurn ? body : { ...body, ...initialBody }),
                 headers: requestHeaders,
-                method: 'POST'
+                method: 'POST',
+                signal
               }
             );
 
