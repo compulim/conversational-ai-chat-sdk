@@ -4,12 +4,12 @@ import { setupServer } from 'msw/node';
 import { type Activity } from '../../../types/Activity';
 import { type Strategy } from '../../../types/Strategy';
 import { type Telemetry } from '../../../types/Telemetry';
-import type DirectToEngineChatAdapterAPIClass from '../../DirectToEngineChatAdapterAPI';
-import type { DirectToEngineChatAdapterAPIInit } from '../../DirectToEngineChatAdapterAPI';
+import type DirectToEngineChatAdapterAPIClass from '../../DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPI';
+import { type DirectToEngineChatAdapterAPIInit } from '../../DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIInit';
 import { type BotResponse } from '../../types/BotResponse';
 import { parseConversationId } from '../../types/ConversationId';
 import { type DefaultHttpResponseResolver } from '../../types/DefaultHttpResponseResolver';
-import type { StartNewConversationInit } from '../../types/HalfDuplexChatAdapterAPI';
+import { type StartNewConversationInit } from '../../types/HalfDuplexChatAdapterAPI';
 import { type JestMockOf } from '../../types/JestMockOf';
 
 const server = setupServer();
@@ -30,7 +30,9 @@ beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-const DirectToEngineChatAdapterAPI = jest.requireActual('../../DirectToEngineChatAdapterAPI').default as {
+const DirectToEngineChatAdapterAPI = jest.requireActual(
+  '../../DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPI'
+).default as {
   new (strategy: Strategy, init?: DirectToEngineChatAdapterAPIInit): DirectToEngineChatAdapterAPIClass;
   startNewConversation(init: StartNewConversationInit): AsyncIterableIterator<Activity>;
 };
@@ -146,13 +148,16 @@ data: end
                 );
               }
 
+              // Let the control reach pRetry.onFailedAttempt(), will advance by 1 ms.
+              await jest.runOnlyPendingTimersAsync();
+
               // Finishes the sleep inside p-retry for handling 429.
               await jest.advanceTimersToNextTimerAsync();
             });
 
             describe('should have POST to /conversations', () => {
               test('once', () => expect(httpPostConversation).toHaveBeenCalledTimes(2));
-              test('at t=12.345s', () => expect(jest.now()).toBe(12_345));
+              test('at t=12.346s', () => expect(jest.now()).toBe(12_346));
             });
 
             describe('after retry', () => {

@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@microsoft/applicationinsights-common": "^2.8.15",
+    "@testduet/wait-for": "^0.1.0",
     "@types/jest": "^29.5.3",
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.2.0",
@@ -72,7 +73,7 @@
     "base64-arraybuffer": "^1.0.2",
     "core-js-pure": "^3.37.1",
     "eventsource-parser": "^1.1.1",
-    "iter-fest": "^0.2.2-main.5f5a121",
+    "iter-fest": "^0.2.2-main.f145669",
     "on-error-resume-next": "^2.0.1",
     "p-retry": "^6.2.0",
     "uuid": "^9.0.1",

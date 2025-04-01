@@ -1,5 +1,6 @@
 /.env
 /*.tgz
+/coverage/
 /dist/
 /lib/
 /LICENSE

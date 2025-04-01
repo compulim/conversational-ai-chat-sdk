@@ -12,5 +12,5 @@ export type ExecuteTurnInit = {
 
 export interface HalfDuplexChatAdapterAPI {
   startNewConversation(init: StartNewConversationInit): AsyncIterableIterator<Activity>;
-  executeTurn(activity: Activity): AsyncIterableIterator<Activity>;
+  executeTurn(activity?: Activity | undefined): AsyncIterableIterator<Activity>;
 }

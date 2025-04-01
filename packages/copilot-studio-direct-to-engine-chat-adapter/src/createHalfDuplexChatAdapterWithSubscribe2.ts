@@ -1,35 +1,25 @@
-import DirectToEngineChatAdapterAPI from './private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPI';
+import type { CreateHalfDuplexChatAdapterInit } from './createHalfDuplexChatAdapter';
+import DirectToEngineChatAdapterAPIWithExecuteViaSubscribe from './private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIWithExecuteViaSubscribe';
 import { type ExecuteTurnInit, type HalfDuplexChatAdapterAPI } from './private/types/HalfDuplexChatAdapterAPI';
 import { type Activity } from './types/Activity';
 import { type Strategy } from './types/Strategy';
-import { type Telemetry } from './types/Telemetry';
 
-type ExecuteTurnFunction = (activity: Activity, init?: ExecuteTurnInit | undefined) => TurnGenerator;
+type ExecuteTurnFunction = (activity: Activity | undefined, init?: ExecuteTurnInit | undefined) => TurnGenerator;
 
-type CreateHalfDuplexChatAdapterInit = {
-  emitStartConversationEvent?: boolean | undefined;
-  locale?: string | undefined;
-  retry?:
-    | Readonly<{
-        factor?: number | undefined;
-        minTimeout?: number | undefined;
-        maxTimeout?: number | undefined;
-        randomize?: boolean | undefined;
-        retries?: number | undefined;
-      }>
-    | undefined;
-  telemetry?: Telemetry | undefined;
+type CreateHalfDuplexChatAdapterWithSubscribe2Init = CreateHalfDuplexChatAdapterInit & {
+  onActivity?: (() => void) | undefined;
+  signal?: AbortSignal | undefined;
 };
 
 type TurnGenerator = AsyncGenerator<Activity, ExecuteTurnFunction, undefined>;
 
 const createExecuteTurn = (
   api: HalfDuplexChatAdapterAPI,
-  init: CreateHalfDuplexChatAdapterInit | undefined
+  init: CreateHalfDuplexChatAdapterWithSubscribe2Init | undefined
 ): ExecuteTurnFunction => {
   let obsoleted = false;
 
-  return (activity: Activity): TurnGenerator => {
+  return (activity: Activity | undefined): TurnGenerator => {
     if (obsoleted) {
       const error = new Error('This executeTurn() function is obsoleted. Please use a new one.');
 
@@ -49,12 +39,16 @@ const createExecuteTurn = (
 };
 
 export default function createHalfDuplexChatAdapter(
-  strategy: Strategy,
-  init: CreateHalfDuplexChatAdapterInit = {}
+  strategy: Strategy & {
+    experimental_prepareSubscribeActivities: Exclude<Strategy['experimental_prepareSubscribeActivities'], undefined>;
+  },
+  init: CreateHalfDuplexChatAdapterWithSubscribe2Init = {}
 ): TurnGenerator {
   return (async function* (): TurnGenerator {
-    const api = new DirectToEngineChatAdapterAPI(strategy, {
+    const api = new DirectToEngineChatAdapterAPIWithExecuteViaSubscribe(strategy, {
+      onActivity: init.onActivity,
       retry: init.retry,
+      signal: init.signal,
       telemetry: init.telemetry
     });
 
@@ -67,4 +61,8 @@ export default function createHalfDuplexChatAdapter(
   })();
 }
 
-export type { CreateHalfDuplexChatAdapterInit, ExecuteTurnFunction, TurnGenerator };
+export type {
+  CreateHalfDuplexChatAdapterWithSubscribe2Init as CreateHalfDuplexChatAdapterInit,
+  ExecuteTurnFunction,
+  TurnGenerator
+};
