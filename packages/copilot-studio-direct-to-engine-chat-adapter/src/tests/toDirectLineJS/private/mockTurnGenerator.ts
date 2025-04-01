@@ -1,48 +1,48 @@
 /// <reference types="jest" />
 
 import { type ExecuteTurnFunction, type TurnGenerator } from '../../../createHalfDuplexChatAdapter';
+import createReadableStreamWithController from '../../../private/createReadableStreamWithController';
 import { type JestMockOf } from '../../../private/types/JestMockOf';
 import { type Activity } from '../../../types/Activity';
 
-function mockTurnGenerator(): {
-  executeTurnCalled: Promise<void>;
-  executeTurnMock: JestMockOf<ExecuteTurnFunction>;
+type MockedTurn = {
   incomingActivitiesController: ReadableStreamDefaultController<Activity>;
   turnGenerator: TurnGenerator;
+};
+
+function mockTurnGenerator(): {
+  executeTurnMock: JestMockOf<ExecuteTurnFunction>;
+  mockedTurns: MockedTurn[];
 } {
-  let incomingActivitiesController: ReadableStreamDefaultController<Activity> | undefined;
+  const mockedTurns: MockedTurn[] = [];
 
-  const incomingActivities = new ReadableStream<Activity>({
-    start(controller) {
-      incomingActivitiesController = controller;
-    }
-  });
+  const executeTurnMock: JestMockOf<ExecuteTurnFunction> = jest.fn().mockImplementation(() => {
+    const { controller: incomingActivitiesController, readableStream } = createReadableStreamWithController<Activity>();
 
-  if (!incomingActivitiesController) {
-    throw new Error('ASSERTION ERROR: Controller should be assigned');
-  }
-
-  const executeTurnResolvers = Promise.withResolvers<void>();
-  const executeTurnMock: JestMockOf<ExecuteTurnFunction> = new Proxy(jest.fn(), {
-    apply(target, thisArg, argArray) {
-      executeTurnResolvers.resolve();
-
-      return target.apply(thisArg, argArray);
-    }
-  });
-
-  return {
-    executeTurnCalled: executeTurnResolvers.promise,
-    executeTurnMock,
-    incomingActivitiesController,
-    turnGenerator: (async function* () {
-      for await (const activity of incomingActivities) {
+    const turnGenerator = (async function* () {
+      for await (const activity of readableStream) {
         yield activity;
       }
 
       return executeTurnMock;
-    })()
+    })();
+
+    mockedTurns.push({
+      incomingActivitiesController,
+      turnGenerator
+    });
+
+    return turnGenerator;
+  });
+
+  executeTurnMock(undefined as any);
+
+  return {
+    executeTurnMock,
+    mockedTurns
   };
 }
 
 export default mockTurnGenerator;
+
+export { type MockedTurn };

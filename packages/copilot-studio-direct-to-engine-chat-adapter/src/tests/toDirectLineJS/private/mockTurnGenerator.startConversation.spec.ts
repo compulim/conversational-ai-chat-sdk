@@ -1,9 +1,8 @@
-import { type ExecuteTurnFunction } from '../../../createHalfDuplexChatAdapter';
 import { type JestMockOf } from '../../../private/types/JestMockOf';
 import toDirectLineJS from '../../../toDirectLineJS';
 import { type Activity } from '../../../types/Activity';
 import { type DirectLineJSBotConnection } from '../../../types/DirectLineJSBotConnection';
-import mockTurnGenerator, { type MockedTurn } from './mockTurnGenerator2';
+import mockTurnGenerator, { type MockedTurn } from './mockTurnGenerator';
 
 describe('with a TurnGenerator', () => {
   let activitySubscriber: JestMockOf<(activity: Activity) => void>;
