@@ -83,9 +83,11 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
   #telemetry: Telemetry | undefined;
 
   public startNewConversation(init: StartNewConversationInit): AsyncIterableIterator<Activity> {
-    const iterator = super.startNewConversation(init);
+    const superStartNewConversation = super.startNewConversation.bind(this);
 
     return async function* (this: DirectToEngineChatAdapterAPIWithExecuteViaSubscribe) {
+      const iterator = superStartNewConversation(init);
+
       for await (const activity of iterator) {
         yield activity;
       }
