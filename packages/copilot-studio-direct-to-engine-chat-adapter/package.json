@@ -36,6 +36,26 @@
         "types": "./dist/copilot-studio-direct-to-engine-chat-adapter.bundle.d.ts",
         "default": "./dist/copilot-studio-direct-to-engine-chat-adapter.bundle.js"
       }
+    },
+    "./experimental": {
+      "import": {
+        "types": "./dist/copilot-studio-direct-to-engine-chat-adapter.experimental.d.mts",
+        "default": "./dist/copilot-studio-direct-to-engine-chat-adapter.experimental.mjs"
+      },
+      "require": {
+        "types": "./dist/copilot-studio-direct-to-engine-chat-adapter.experimental.d.ts",
+        "default": "./dist/copilot-studio-direct-to-engine-chat-adapter.experimental.js"
+      }
+    },
+    "./experimental-bundle": {
+      "import": {
+        "types": "./dist/copilot-studio-direct-to-engine-chat-adapter.experimental-bundle.d.mts",
+        "default": "./dist/copilot-studio-direct-to-engine-chat-adapter.experimental-bundle.mjs"
+      },
+      "require": {
+        "types": "./dist/copilot-studio-direct-to-engine-chat-adapter.experimental-bundle.d.ts",
+        "default": "./dist/copilot-studio-direct-to-engine-chat-adapter.experimental-bundle.js"
+      }
     }
   },
   "scripts": {

@@ -1,12 +1,12 @@
-import type { CreateHalfDuplexChatAdapterInit } from './createHalfDuplexChatAdapter';
-import DirectToEngineChatAdapterAPIWithExecuteViaSubscribe from './private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIWithExecuteViaSubscribe';
-import { type ExecuteTurnInit, type HalfDuplexChatAdapterAPI } from './private/types/HalfDuplexChatAdapterAPI';
-import { type Activity } from './types/Activity';
-import { type Strategy } from './types/Strategy';
+import type { CreateHalfDuplexChatAdapterInit } from '../createHalfDuplexChatAdapter';
+import DirectToEngineChatAdapterAPIWithExecuteViaSubscribe from '../private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIWithExecuteViaSubscribe';
+import { type ExecuteTurnInit, type HalfDuplexChatAdapterAPI } from '../private/types/HalfDuplexChatAdapterAPI';
+import { type Activity } from '../types/Activity';
+import { type Strategy } from '../types/Strategy';
 
 type ExecuteTurnFunction = (activity: Activity | undefined, init?: ExecuteTurnInit | undefined) => TurnGenerator;
 
-type CreateHalfDuplexChatAdapterWithSubscribe2Init = CreateHalfDuplexChatAdapterInit & {
+type CreateHalfDuplexChatAdapterWithSubscribeInit = CreateHalfDuplexChatAdapterInit & {
   onActivity?: (() => void) | undefined;
   signal?: AbortSignal | undefined;
 };
@@ -15,7 +15,7 @@ type TurnGenerator = AsyncGenerator<Activity, ExecuteTurnFunction, undefined>;
 
 const createExecuteTurn = (
   api: HalfDuplexChatAdapterAPI,
-  init: CreateHalfDuplexChatAdapterWithSubscribe2Init | undefined
+  init: CreateHalfDuplexChatAdapterWithSubscribeInit | undefined
 ): ExecuteTurnFunction => {
   let obsoleted = false;
 
@@ -42,7 +42,7 @@ export default function createHalfDuplexChatAdapter(
   strategy: Strategy & {
     experimental_prepareSubscribeActivities: Exclude<Strategy['experimental_prepareSubscribeActivities'], undefined>;
   },
-  init: CreateHalfDuplexChatAdapterWithSubscribe2Init = {}
+  init: CreateHalfDuplexChatAdapterWithSubscribeInit = {}
 ): TurnGenerator {
   return (async function* (): TurnGenerator {
     const api = new DirectToEngineChatAdapterAPIWithExecuteViaSubscribe(strategy, {
@@ -62,7 +62,7 @@ export default function createHalfDuplexChatAdapter(
 }
 
 export type {
-  CreateHalfDuplexChatAdapterWithSubscribe2Init as CreateHalfDuplexChatAdapterInit,
+  CreateHalfDuplexChatAdapterWithSubscribeInit,
   ExecuteTurnFunction,
   TurnGenerator
 };

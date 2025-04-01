@@ -18,7 +18,17 @@ export default defineConfig([
   },
   {
     ...BASE_CONFIG,
+    entry: { 'copilot-studio-direct-to-engine-chat-adapter.experimental': './src/experimental/index.ts' }
+  },
+  {
+    ...BASE_CONFIG,
     entry: { 'copilot-studio-direct-to-engine-chat-adapter.bundle': './src/index.ts' },
+    noExternal: [/./u],
+    minify: true
+  },
+  {
+    ...BASE_CONFIG,
+    entry: { 'copilot-studio-direct-to-engine-chat-adapter.experimental-bundle': './src/experimental/index.ts' },
     noExternal: [/./u],
     minify: true
   },

@@ -4,7 +4,7 @@ import { setupServer } from 'msw/node';
 import createHalfDuplexChatAdapter, {
   type ExecuteTurnFunction,
   type TurnGenerator
-} from '../../createHalfDuplexChatAdapterWithSubscribe2';
+} from '../../experimental/createHalfDuplexChatAdapterWithSubscribe';
 import createReadableStreamWithController from '../../private/createReadableStreamWithController';
 import ignoreUnhandledRejection from '../../private/tests/private/ignoreUnhandledRejection';
 import { type BotResponse } from '../../private/types/BotResponse';
@@ -31,20 +31,6 @@ const throwOnCall =
   (..._: Parameters<T>): ReturnType<T> => {
     throw new Error(message);
   };
-
-// // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// function assertNthMockReturn<T extends (...args: any[]) => any>(
-//   mockFn: JestMockOf<T>,
-//   index: number
-// ): jest.MockResult<ReturnType<T>> & { type: 'return' } {
-//   const result = mockFn.mock.results[index];
-
-//   if (result?.type !== 'return') {
-//     throw new Error('ASSERTION');
-//   }
-
-//   return result;
-// }
 
 // For debugging only one permutation.
 const DEBUG_SINGLE_PERMUTATION = true;
