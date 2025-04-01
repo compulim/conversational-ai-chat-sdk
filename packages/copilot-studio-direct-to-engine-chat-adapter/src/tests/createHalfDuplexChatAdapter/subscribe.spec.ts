@@ -131,12 +131,7 @@ describe.each(['auto' as const, 'rest' as const].slice(0, DEBUG_SINGLE_PERMUTATI
               onActivity,
               retry: { factor: 1, minTimeout: 0, retries: 1 },
               signal: abortController.signal,
-              telemetry: {
-                get correlationId() {
-                  return getCorrelationId();
-                },
-                trackException
-              }
+              telemetry: { getCorrelationId, trackException }
             });
           });
 

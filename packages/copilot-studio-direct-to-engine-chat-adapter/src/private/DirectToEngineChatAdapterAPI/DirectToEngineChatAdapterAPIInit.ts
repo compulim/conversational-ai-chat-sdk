@@ -1,8 +1,19 @@
-import { any, boolean, custom, instance, number, object, optional, pipe, readonly, string, transform, undefinedable, type InferInput } from 'valibot';
-// import type { Telemetry } from '../../types/Telemetry';
+import {
+  boolean,
+  custom,
+  function_,
+  instance,
+  number,
+  object,
+  optional,
+  pipe,
+  readonly,
+  transform,
+  type InferInput
+} from 'valibot';
 
-import { DEFAULT_RETRY_COUNT } from './private/Constants';
 import type { Telemetry } from '../../types/Telemetry';
+import { DEFAULT_RETRY_COUNT } from './private/Constants';
 
 const directToEngineChatAdapterAPIInitSchema = pipe(
   object({
@@ -22,23 +33,28 @@ const directToEngineChatAdapterAPIInitSchema = pipe(
     signal: optional(instance(AbortSignal, '"signal" must be of type AbortSignal')),
     telemetry: optional(
       // `correlationId` is a getter and it would be taken out by valibot.
-      any()
-      // pipe(
-      //   object(
-      //     {
-      //       correlationId: undefinedable(string('"telemetry.correlationId" must be a string')),
-      //       trackException: optional(
-      //         pipe(
-      //           custom(value => typeof value === 'function', '"telemetry.trackException" must be a function'),
-      //           transform(value => value as Telemetry['trackException'])
-      //         )
-      //       )
-      //     },
-      //     '"telemetry" must be an object'
-      //   ),
-      //   readonly(),
-      //   transform(value => value as Telemetry)
-      // )
+      // any()
+      pipe(
+        object(
+          {
+            getCorrelationId: optional(
+              pipe(
+                function_(),
+                transform(value => value as () => string | undefined)
+              )
+            ),
+            trackException: optional(
+              pipe(
+                custom(value => typeof value === 'function', '"telemetry.trackException" must be a function'),
+                transform(value => value as Telemetry['trackException'])
+              )
+            )
+          },
+          '"telemetry" must be an object'
+        ),
+        readonly(),
+        transform(value => value as Telemetry)
+      )
     )
   }),
   readonly()

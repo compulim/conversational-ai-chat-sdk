@@ -72,7 +72,7 @@ class APISession {
               CHAT_ADAPTER_HEADER_NAME,
               new URLSearchParams([['version', process.env.npm_package_version || '']] satisfies string[][]).toString()
             );
-            const correlationId = this.#telemetry?.correlationId;
+            const correlationId = this.#telemetry?.getCorrelationId();
             correlationId && requestHeaders.set(CORRELATION_ID_HEADER_NAME, correlationId);
 
             currentResponse = await fetch(

@@ -71,12 +71,7 @@ describe.each(['auto' as const, 'rest' as const])('Using "%s" transport', transp
           emitStartConversationEvent,
           locale: 'ja-JP',
           retry: { factor: 1, minTimeout: 0 },
-          telemetry: {
-            get correlationId() {
-              return getCorrelationId();
-            },
-            trackException
-          }
+          telemetry: { getCorrelationId, trackException }
         });
 
         directLineJS = toDirectLineJS(chatAdapter);
