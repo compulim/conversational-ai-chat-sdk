@@ -61,8 +61,4 @@ export default function createHalfDuplexChatAdapter(
   })();
 }
 
-export type {
-  CreateHalfDuplexChatAdapterWithSubscribeInit,
-  ExecuteTurnFunction,
-  TurnGenerator
-};
+export type { CreateHalfDuplexChatAdapterWithSubscribeInit, ExecuteTurnFunction, TurnGenerator };
