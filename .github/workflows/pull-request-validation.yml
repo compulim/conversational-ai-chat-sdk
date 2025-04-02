@@ -210,8 +210,8 @@ jobs:
           echo $package_matrix | jq -r | tee .tmp/package-matrix.json
 
           cat ./package.json | jq \
-            --argfile matrix .tmp/package-matrix.json \
-            '.dependencies + ($matrix | map({ key: .name }) | from_entries) | with_entries(select(.value // "" | contains("-"))) | if length > 0 then halt_error(1) else empty end'
+            --slurpfile matrix .tmp/package-matrix.json \
+            '.dependencies + ($matrix[0] | map({ key: .name }) | from_entries) | with_entries(select(.value // "" | contains("-"))) | if length > 0 then halt_error(1) else empty end'
 
       - name: 'Sanity check: version must be prerelease and ends with -0'
         run: '[[ "$(cat ./package.json | jq -r ''.version'')" == *-0 ]]'
