@@ -109,6 +109,7 @@ export default function toDirectLineJS(halfDuplexChatAdapter: TurnGenerator): Di
             throw error;
           }
 
+          // TODO: Add a test to make sure "give up my turn" will not echo back.
           if (activity) {
             // Except "give up my turn", we will generate the activity ID and echoback the activity only when the first incoming activity arrived.
             // This make sure the bot acknowledged the outgoing activity before we echoback the activity.
