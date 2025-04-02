@@ -11,7 +11,7 @@ const tokenSchema = string('getToken must return a string');
 type DeltaToken = InferOutput<typeof deltaTokenSchema>;
 type Token = InferOutput<typeof tokenSchema>;
 
-export default class ExperimentalTestCanvasBotStrategyWithSubscribe extends TestCanvasBotStrategy {
+export default class TestCanvasBotStrategyWithSubscribe extends TestCanvasBotStrategy {
   constructor(init: TestCanvasBotStrategyInit) {
     super(init);
 
@@ -20,17 +20,6 @@ export default class ExperimentalTestCanvasBotStrategyWithSubscribe extends Test
     this.#baseURL = new URL(`/environments/${encodeURI(environmentId)}/bots/${encodeURI(botId)}/test/`, islandURI);
     this.#getDeltaToken = async () => parse(deltaTokenSchema, await getDeltaToken?.());
     this.#getToken = async () => parse(tokenSchema, await getToken());
-
-    this.experimental_prepareSubscribeActivities = async () => {
-      const deltaToken = await this.#getDeltaToken();
-
-      return {
-        baseURL: this.#baseURL,
-        body: deltaToken ? { deltaToken } : undefined,
-        headers: await this.#getHeaders(),
-        transport: 'auto'
-      };
-    };
   }
 
   #baseURL: URL;
@@ -41,5 +30,14 @@ export default class ExperimentalTestCanvasBotStrategyWithSubscribe extends Test
     return new Headers({ authorization: `Bearer ${await this.#getToken()}` });
   }
 
-  experimental_prepareSubscribeActivities: (() => Promise<StrategyRequestInit>) | undefined;
+  async experimental_prepareSubscribeActivities(): Promise<StrategyRequestInit> {
+    const deltaToken = await this.#getDeltaToken();
+
+    return {
+      baseURL: this.#baseURL,
+      body: deltaToken ? { deltaToken } : undefined,
+      headers: await this.#getHeaders(),
+      transport: 'auto'
+    };
+  }
 }
