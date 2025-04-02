@@ -11,7 +11,7 @@ defaults:
     shell: bash
 
 env:
-  node-version: lts/Iron
+  node-version: lts/Jod # Node.js 22
 
 jobs:
   sanity-check-root:

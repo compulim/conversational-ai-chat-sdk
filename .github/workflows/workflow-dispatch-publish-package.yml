@@ -26,7 +26,7 @@ defaults:
     shell: bash
 
 env:
-  node-version: lts/Iron
+  node-version: lts/Jod # Node.js 22
   pull_request_branch: ${{ format('bot/bump-after-release/{0}', github.run_number) }}
   release_branch: ${{ format('bot/release/production/{0}', github.run_number) }}
   skip-secure-feed: true # Terrapin is sunsetting
