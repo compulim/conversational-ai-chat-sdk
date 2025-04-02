@@ -72,7 +72,7 @@ export default function toDirectLineJS(halfDuplexChatAdapter: TurnGenerator): Di
             postActivityDeferred = promiseWithResolvers();
 
             // Patch `activity.attachments[].contentUrl` into Data URI if it was Blob URL.
-            if (activity.type === 'message' && activity.attachments) {
+            if (activity && activity.type === 'message' && activity.attachments) {
               activity.attachments = await Promise.all(
                 activity.attachments.map(async (attachment: Attachment) => {
                   if ('contentUrl' in attachment) {
@@ -109,14 +109,16 @@ export default function toDirectLineJS(halfDuplexChatAdapter: TurnGenerator): Di
             throw error;
           }
 
-          // We will generate the activity ID and echoback the activity only when the first incoming activity arrived.
-          // This make sure the bot acknowledged the outgoing activity before we echoback the activity.
-          handleAcknowledgementOnce = once(() => {
-            const activityId = v4() as ActivityId;
+          if (activity) {
+            // Except "give up my turn", we will generate the activity ID and echoback the activity only when the first incoming activity arrived.
+            // This make sure the bot acknowledged the outgoing activity before we echoback the activity.
+            handleAcknowledgementOnce = once(() => {
+              const activityId = v4() as ActivityId;
 
-            observer.next(patchActivity({ ...activity, id: activityId }));
-            resolvePostActivity(activityId);
-          });
+              observer.next(patchActivity({ ...activity, id: activityId }));
+              resolvePostActivity(activityId);
+            });
+          }
         }
       } catch (error) {
         console.error('Failed to communicate with the chat adapter.', error);
