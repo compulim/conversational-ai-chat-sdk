@@ -192,7 +192,7 @@ jobs:
         run: |
           mkdir -p ./dist
           mkdir -p ./lib
-          find ./dist/ ./lib/ -name *.js -print0 | xargs -0 -i test -f {}.map
+          find ./dist/ ./lib/ -name '*.js' -print0 | xargs -0 -i test -f {}.map
 
       - if: steps.prepare.outputs.is-private != 'true'
         name: 'Sanity check: no lib/**/*.spec.*'
