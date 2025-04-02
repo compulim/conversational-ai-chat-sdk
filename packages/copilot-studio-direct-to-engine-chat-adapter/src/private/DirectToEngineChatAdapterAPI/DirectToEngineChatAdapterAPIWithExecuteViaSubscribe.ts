@@ -156,6 +156,13 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
       try {
         yield* asyncIteratorWithDrain(
           readableStreamValuesWithSignal(this.#subscribingActivities, {
+            // TODO: Add test to prove preventCancel is important.
+            //       1. While subscribe
+            //       2. Run execute, then end it
+            //       3. Add an activity to subscribe
+            //       4. Run execute again
+            //       5. EXPECT: Should get activities from /subscribe
+            preventCancel: true,
             signal: abortController.signal
           }),
           () => abortAfterDrain && abortController.abort()
