@@ -180,11 +180,11 @@ jobs:
 
       - if: steps.prepare.outputs.is-private != 'true'
         name: 'Sanity check: all exports exists'
-        run: cat ./package.json | jq '.exports | leaf_paths as $path | getpath($path)' | xargs -L1 test -f
+        run: cat ./package.json | jq '.exports | paths(scalars) as $path | getpath($path)' | xargs -L1 test -f
 
       - if: steps.prepare.outputs.is-private != 'true'
         name: 'Sanity check: all exports has "types" condition'
-        run: cat ./package.json | jq '.exports as $e | $e | leaf_paths | .[0:-1] as $p | $e | getpath($p) | if has("types") then empty else halt_error(1) end'
+        run: cat ./package.json | jq '.exports as $e | $e | paths(scalars) | .[0:-1] as $p | $e | getpath($p) | if has("types") then empty else halt_error(1) end'
 
       - if: steps.prepare.outputs.is-private != 'true'
         name: 'Sanity check: has source maps'
