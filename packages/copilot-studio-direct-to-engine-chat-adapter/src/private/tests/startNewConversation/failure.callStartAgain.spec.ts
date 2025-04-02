@@ -68,9 +68,12 @@ describe.each(['auto' as const, 'rest' as const])('Using "%s" transport', transp
 
         adapter = new DirectToEngineChatAdapterAPI(strategy, {
           retry: { factor: 1, minTimeout: 0 },
-          telemetry: { get correlationId() {
-            return getCorrelationId();
-          }, trackException }
+          telemetry: {
+            get correlationId() {
+              return getCorrelationId();
+            },
+            trackException
+          }
         });
       });
 

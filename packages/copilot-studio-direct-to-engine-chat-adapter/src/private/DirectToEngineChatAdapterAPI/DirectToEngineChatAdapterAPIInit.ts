@@ -53,7 +53,7 @@ const directToEngineChatAdapterAPIInitSchema = pipe(
         // `correlationId` is a getter and it would be taken out by object(), we need to use any() here.
         any(),
         transform(value => {
-          const { correlationId, ...telemetrySchemaEntriesWithoutCorrelationId } = telemetrySchema.entries;
+          const { correlationId: _, ...telemetrySchemaEntriesWithoutCorrelationId } = telemetrySchema.entries;
 
           return {
             ...parse(object(telemetrySchemaEntriesWithoutCorrelationId), value),

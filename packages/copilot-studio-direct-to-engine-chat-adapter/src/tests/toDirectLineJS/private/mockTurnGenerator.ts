@@ -35,6 +35,7 @@ function mockTurnGenerator(): {
     return turnGenerator;
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   executeTurnMock(undefined as any);
 
   return {
