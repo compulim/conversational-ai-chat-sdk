@@ -36,9 +36,9 @@ runs:
 
           cat ./matrix.json | jq \
             --arg path "$path" \
-            --argfile packageJSON ./$path/package.json \
+            --slurpfile packageJSON ./$path/package.json \
             -r \
-            '.packages += [{ name: $packageJSON.name, path: $path, tarball: ($packageJSON.name + "-" + $packageJSON.version + ".tgz"), version: $packageJSON.version }]' \
+            '.packages += [{ name: $packageJSON[0].name, path: $path, tarball: ($packageJSON[0].name + "-" + $packageJSON[0].version + ".tgz"), version: $packageJSON[0].version }]' \
             > ./matrix.json.tmp
 
           mv ./matrix.json.tmp ./matrix.json
@@ -63,10 +63,10 @@ runs:
 
           jq \
             --arg name "$name" \
-            --argfile matrixJSON ./matrix.json \
+            --slurpfile matrixJSON ./matrix.json \
             -n \
             -r \
-            '$matrixJSON | .publishingPackages += ($matrixJSON.packages | map(select(.name == $name)))' \
+            '$matrixJSON[0] | .publishingPackages += ($matrixJSON[0].packages | map(select(.name == $name)))' \
             | tee ./matrix.tmp.json
 
           mv ./matrix.tmp.json ./matrix.json
@@ -102,8 +102,8 @@ runs:
     - name: 'Sanity check: matrix should list all workspaces'
       run: |
         cat ./matrix.json | jq \
-          --argfile packageJSON ./package.json \
-          'if (.packages | map(.path)) == ($packageJSON.workspaces) then empty else halt_error(1) end'
+          --slurpfile packageJSON ./package.json \
+          'if (.packages | map(.path)) == ($packageJSON[0].workspaces) then empty else halt_error(1) end'
       shell: bash
 
     - name: 'Sanity check: all entries must have "name" field'
