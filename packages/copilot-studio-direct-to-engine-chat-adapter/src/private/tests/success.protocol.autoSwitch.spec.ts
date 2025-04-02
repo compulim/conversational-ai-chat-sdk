@@ -69,7 +69,12 @@ describe.each([true, false])('With emitStartConversationEvent of %s', emitStartC
 
       adapter = new DirectToEngineChatAdapterAPI(strategy, {
         retry: { factor: 1, minTimeout: 0 },
-        telemetry: { getCorrelationId, trackException }
+        telemetry: {
+          get correlationId() {
+            return getCorrelationId();
+          },
+          trackException
+        }
       });
     });
 

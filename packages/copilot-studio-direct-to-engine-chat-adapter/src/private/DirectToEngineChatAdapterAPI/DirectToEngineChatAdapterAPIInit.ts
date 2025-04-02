@@ -1,19 +1,36 @@
 import {
+  any,
   boolean,
+  check,
   custom,
-  function_,
   instance,
   number,
   object,
   optional,
+  parse,
   pipe,
   readonly,
+  safeParse,
+  string,
   transform,
   type InferInput
 } from 'valibot';
 
 import type { Telemetry } from '../../types/Telemetry';
 import { DEFAULT_RETRY_COUNT } from './private/Constants';
+
+const telemetrySchema = object(
+  {
+    correlationId: optional(string()),
+    trackException: optional(
+      pipe(
+        custom(value => typeof value === 'function', '"telemetry.trackException" must be a function'),
+        transform(value => value as Telemetry['trackException'])
+      )
+    )
+  },
+  '"telemetry" must be an object'
+);
 
 const directToEngineChatAdapterAPIInitSchema = pipe(
   object({
@@ -32,28 +49,20 @@ const directToEngineChatAdapterAPIInitSchema = pipe(
     ),
     signal: optional(instance(AbortSignal, '"signal" must be of type AbortSignal')),
     telemetry: optional(
-      // `correlationId` is a getter and it would be taken out by valibot.
-      // any()
       pipe(
-        object(
-          {
-            getCorrelationId: optional(
-              pipe(
-                function_(),
-                transform(value => value as () => string | undefined)
-              )
-            ),
-            trackException: optional(
-              pipe(
-                custom(value => typeof value === 'function', '"telemetry.trackException" must be a function'),
-                transform(value => value as Telemetry['trackException'])
-              )
-            )
-          },
-          '"telemetry" must be an object'
-        ),
-        readonly(),
-        transform(value => value as Telemetry)
+        // `correlationId` is a getter and it would be taken out by object(), we need to use any() here.
+        any(),
+        transform(value => {
+          const { correlationId, ...telemetrySchemaEntriesWithoutCorrelationId } = telemetrySchema.entries;
+
+          return {
+            ...parse(object(telemetrySchemaEntriesWithoutCorrelationId), value),
+            get correlationId() {
+              return value.correlationId;
+            }
+          };
+        }),
+        check(value => safeParse(telemetrySchema, value).success)
       )
     )
   }),
