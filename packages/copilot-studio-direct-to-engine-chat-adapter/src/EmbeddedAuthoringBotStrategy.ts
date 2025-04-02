@@ -13,14 +13,12 @@ const embeddedAuthoringBotStrategyInitSchema = object({
   getDeltaToken: optional(
     pipe(
       function_('getDeltaToken must be a function'),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      transform<() => any, () => Promise<DeltaToken>>(input => input)
+      transform<never, () => Promise<DeltaToken>>(input => input)
     )
   ),
   getToken: pipe(
     function_('getToken must be a function'),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    transform<() => any, () => Promise<Token>>(input => input)
+    transform<never, () => Promise<Token>>(input => input)
   )
 });
 const tokenSchema = string('getToken must return a string');

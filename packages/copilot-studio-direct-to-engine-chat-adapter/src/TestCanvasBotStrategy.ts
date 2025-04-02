@@ -26,14 +26,12 @@ const testCanvasBotStrategyInitSchema = object({
   getDeltaToken: optional(
     pipe(
       function_('getDeltaToken must be a function'),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      transform<() => any, () => Promise<DeltaToken>>(input => input)
+      transform<never, () => Promise<DeltaToken>>(input => input)
     )
   ),
   getToken: pipe(
     function_('getToken must be a function'),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    transform<() => any, () => Promise<Token>>(input => input)
+    transform<never, () => Promise<Token>>(input => input)
   ),
   islandURI: instance(URL, 'islandURI must be instance of URL'),
   transport: union([literal('auto'), literal('rest')], 'transport must be either "auto" or "rest"')
