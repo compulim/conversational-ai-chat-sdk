@@ -97,7 +97,7 @@
     "base64-arraybuffer": "^1.0.2",
     "core-js-pure": "^3.37.1",
     "eventsource-parser": "^1.1.1",
-    "iter-fest": "^0.2.2-main.f145669",
+    "iter-fest": "^0.3.0",
     "on-error-resume-next": "^2.0.1",
     "p-retry": "^6.2.0",
     "uuid": "^9.0.1",
