@@ -80,7 +80,7 @@ jobs:
 
       - if: strategy.job-index == 0
         name: Upload tarball artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tarball
           path: .tmp/tarball/*.tgz
@@ -116,7 +116,7 @@ jobs:
 
       - run: npm run postinstall --if-present --workspaces=true # Run whitelisted postinstall scripts.
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: tarball
           path: .tmp/tarball/
@@ -150,7 +150,7 @@ jobs:
 
     steps:
       - name: Download tarball artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: tarball
 

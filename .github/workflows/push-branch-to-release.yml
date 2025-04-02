@@ -102,7 +102,7 @@ jobs:
           ls -la .tmp/tarball/
 
       - name: Upload packages artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           name: packages
@@ -121,7 +121,7 @@ jobs:
           sparse-checkout: matrix.json
 
       - name: Download packages artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages
 
@@ -164,7 +164,7 @@ jobs:
 
     steps:
       - name: Download packages artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages
 
@@ -199,7 +199,7 @@ jobs:
       - id: deployment
         if: "env.dry-run != 'true'"
         name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
 
   github-release-publish:
     env:
@@ -226,7 +226,7 @@ jobs:
 
     steps:
       - name: Download tarball artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages
 
@@ -286,7 +286,7 @@ jobs:
           sparse-checkout: .github/actions/check-if-package-has-published
 
       - name: Download packages
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages
 
