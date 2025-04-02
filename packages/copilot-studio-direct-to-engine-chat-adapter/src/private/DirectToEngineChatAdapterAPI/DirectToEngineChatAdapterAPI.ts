@@ -19,8 +19,8 @@ export class DirectToEngineChatAdapterAPIImpl implements HalfDuplexChatAdapterAP
     this.#telemetry = telemetry;
   }
 
-  #session: APISession;
   #busy: boolean = false;
+  #session: APISession;
   #strategy: Strategy;
   #telemetry: Telemetry | undefined;
 
