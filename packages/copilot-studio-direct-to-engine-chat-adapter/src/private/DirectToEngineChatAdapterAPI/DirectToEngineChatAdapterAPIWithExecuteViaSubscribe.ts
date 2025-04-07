@@ -82,6 +82,35 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
   #subscribingActivitiesController: ReadableStreamDefaultController<Activity>;
   #telemetry: Telemetry | undefined;
 
+  async #startSubscribe() {
+    const { baseURL, body, headers } = await this.#strategy.experimental_prepareSubscribeActivities!();
+
+    try {
+      // We cannot use `new EventSource()` because we need to send headers.
+      const iterator = this.#session.post(baseURL, {
+        body,
+        headers,
+        subPath: 'subscribe',
+        transport: 'auto' // Only works over SSE.
+      });
+
+      for await (const activity of iterator) {
+        this.#subscribingActivitiesController.enqueue(activity);
+        this.#onActivity?.();
+      }
+    } catch (error) {
+      // Abort may cause fetch() to throw.
+      if (!isAbortError(error)) {
+        this.#telemetry?.trackException(error, {
+          handledAt: 'DirectToEngineChatAdapterAPI.experimental_subscribeActivities'
+        });
+
+        this.#subscribingActivitiesController.error(error);
+        this.#subscribeRejectReason = error;
+      }
+    }
+  }
+
   public startNewConversation(init: StartNewConversationInit): AsyncIterableIterator<Activity> {
     const superStartNewConversation = super.startNewConversation.bind(this);
 
@@ -93,34 +122,7 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
       }
 
       // After first startNewConversation() is done, start the subscribe.
-      (async function (this: DirectToEngineChatAdapterAPIWithExecuteViaSubscribe) {
-        const { baseURL, body, headers } = await this.#strategy.experimental_prepareSubscribeActivities!();
-
-        try {
-          // We cannot use `new EventSource()` because we need to send headers.
-          const iterator = this.#session.post(baseURL, {
-            body,
-            headers,
-            subPath: 'subscribe',
-            transport: 'auto' // Only works over SSE.
-          });
-
-          for await (const activity of iterator) {
-            this.#subscribingActivitiesController.enqueue(activity);
-            this.#onActivity?.();
-          }
-        } catch (error) {
-          // Abort may cause fetch() to throw.
-          if (!isAbortError(error)) {
-            this.#telemetry?.trackException(error, {
-              handledAt: 'DirectToEngineChatAdapterAPI.experimental_subscribeActivities'
-            });
-
-            this.#subscribingActivitiesController.error(error);
-            this.#subscribeRejectReason = error;
-          }
-        }
-      }).call(this);
+      this.#startSubscribe();
     }.call(this);
   }
 
