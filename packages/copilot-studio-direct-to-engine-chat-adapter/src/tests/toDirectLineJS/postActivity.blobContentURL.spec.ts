@@ -1,3 +1,4 @@
+import { waitFor } from '@testduet/wait-for';
 import { type ConnectionStatus } from 'botframework-directlinejs';
 import { type Observable } from 'iter-fest';
 
@@ -92,6 +93,10 @@ describe('with a TurnGenerator', () => {
         });
 
         describe('should call next turn', () => {
+          // After postActivity() and before nextTurn(), we will read the blob asynchronously.
+          // We are using waitFor here to wait until the blob has read completed.
+          beforeEach(() => waitFor(() => expect(nextTurn).toHaveBeenCalledTimes(2)));
+
           test('once', () => expect(nextTurn).toHaveBeenCalledTimes(2));
 
           test('with the attachment of ArrayBuffer', () =>

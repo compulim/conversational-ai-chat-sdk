@@ -26,8 +26,11 @@ function once(fn: () => Promise<void> | void): () => Promise<void> | void {
   };
 }
 
-export default function toDirectLineJS(halfDuplexChatAdapter: TurnGenerator): DirectLineJSBotConnection {
+export default function toDirectLineJS(
+  halfDuplexChatAdapter: TurnGenerator
+): DirectLineJSBotConnection & { giveUp: () => void } {
   let nextSequenceId = 0;
+  let giveUpDeferred = promiseWithResolvers<void>();
   let postActivityDeferred =
     promiseWithResolvers<readonly [Activity, (id: ActivityId) => void, (error: unknown) => void]>();
 
@@ -66,51 +69,52 @@ export default function toDirectLineJS(halfDuplexChatAdapter: TurnGenerator): Di
           await handleAcknowledgementOnce();
 
           const executeTurn = iterator.lastValue();
-          const [activity, resolvePostActivity, rejectPostActivity] = await postActivityDeferred.promise;
+          const result = await Promise.race([postActivityDeferred.promise, giveUpDeferred.promise]);
 
-          try {
-            postActivityDeferred = promiseWithResolvers();
+          if (result) {
+            const [activity, resolvePostActivity, rejectPostActivity] = result;
 
-            // Patch `activity.attachments[].contentUrl` into Data URI if it was Blob URL.
-            if (activity && activity.type === 'message' && activity.attachments) {
-              activity.attachments = await Promise.all(
-                activity.attachments.map(async (attachment: Attachment) => {
-                  if ('contentUrl' in attachment) {
-                    const { contentUrl } = attachment;
+            try {
+              postActivityDeferred = promiseWithResolvers();
 
-                    // Ignore malformed URL.
-                    if (onErrorResumeNext(() => new URL(contentUrl).protocol) === 'blob:') {
-                      // Only allow fetching blob URLs.
-                      const res = await fetch(contentUrl);
+              // Patch `activity.attachments[].contentUrl` into Data URI if it was Blob URL.
+              if (activity && activity.type === 'message' && activity.attachments) {
+                activity.attachments = await Promise.all(
+                  activity.attachments.map(async (attachment: Attachment) => {
+                    if ('contentUrl' in attachment) {
+                      const { contentUrl } = attachment;
 
-                      if (!res.ok) {
-                        throw new Error('Failed to fetch attachment of blob URL.');
+                      // Ignore malformed URL.
+                      if (onErrorResumeNext(() => new URL(contentUrl).protocol) === 'blob:') {
+                        // Only allow fetching blob URLs.
+                        const res = await fetch(contentUrl);
+
+                        if (!res.ok) {
+                          throw new Error('Failed to fetch attachment of blob URL.');
+                        }
+
+                        // FileReader.readAsDataURL() is not available in Node.js.
+                        return Object.freeze({
+                          ...attachment,
+                          contentUrl: `data:${res.headers.get('content-type') || ''};base64,${base64Encode(
+                            await res.arrayBuffer()
+                          )}`
+                        });
                       }
-
-                      // FileReader.readAsDataURL() is not available in Node.js.
-                      return Object.freeze({
-                        ...attachment,
-                        contentUrl: `data:${res.headers.get('content-type') || ''};base64,${base64Encode(
-                          await res.arrayBuffer()
-                        )}`
-                      });
                     }
-                  }
 
-                  return attachment;
-                })
-              );
+                    return attachment;
+                  })
+                );
+              }
+
+              turnGenerator = executeTurn(activity);
+            } catch (error) {
+              rejectPostActivity(error);
+
+              throw error;
             }
 
-            turnGenerator = executeTurn(activity);
-          } catch (error) {
-            rejectPostActivity(error);
-
-            throw error;
-          }
-
-          // TODO: Add a test to make sure "give up my turn" will not echo back.
-          if (activity) {
             // Except "give up my turn", we will generate the activity ID and echoback the activity only when the first incoming activity arrived.
             // This make sure the bot acknowledged the outgoing activity before we echoback the activity.
             handleAcknowledgementOnce = once(() => {
@@ -119,6 +123,10 @@ export default function toDirectLineJS(halfDuplexChatAdapter: TurnGenerator): Di
               observer.next(patchActivity({ ...activity, id: activityId }));
               resolvePostActivity(activityId);
             });
+          } else {
+            giveUpDeferred = promiseWithResolvers<void>();
+
+            turnGenerator = executeTurn(undefined as any);
           }
         }
       } catch (error) {
@@ -136,6 +144,9 @@ export default function toDirectLineJS(halfDuplexChatAdapter: TurnGenerator): Di
     connectionStatus$: shareObservable(connectionStatusDeferredObservable.observable),
     end() {
       // Half-duplex connection does not requires implicit closing.
+    },
+    giveUp() {
+      giveUpDeferred.resolve();
     },
     postActivity: (activity: Activity) =>
       shareObservable(
