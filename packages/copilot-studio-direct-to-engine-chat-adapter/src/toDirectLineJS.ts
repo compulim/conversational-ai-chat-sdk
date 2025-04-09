@@ -154,6 +154,7 @@ export default function toDirectLineJS(
       giveUpDeferred.resolve();
     },
     postActivity: (activity: Activity) =>
+      // TODO: Throw exception if the postActivity() is already resolved because the current postActivity() will be lost.
       shareObservable(
         new Observable<ActivityId>(observer =>
           postActivityDeferred.resolve(
