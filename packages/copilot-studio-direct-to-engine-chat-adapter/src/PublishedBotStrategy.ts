@@ -11,8 +11,7 @@ const publishedBotStrategyInitSchema = object({
   environmentEndpointURL: instance(URL, 'environmentEndpointURL must be instance of URL'),
   getToken: pipe(
     function_('getToken must be a function'),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    transform<() => any, () => Promise<Token>>(input => input)
+    transform<never, () => Promise<Token>>(input => input)
   ),
   transport: union([literal('auto'), literal('rest')], 'transport must be either "auto" or "rest"')
 });
