@@ -65,6 +65,9 @@ export default function toDirectLineJS(
             observer.next(patchActivity(activity));
           }
 
+          // All activities should be retrieved by now, we will start accepting "give up" signal from this point of time.
+          giveUpDeferred = promiseWithResolvers<void>();
+
           // If no activities received from bot, we should still acknowledge.
           await handleAcknowledgementOnce();
 

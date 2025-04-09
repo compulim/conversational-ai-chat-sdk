@@ -102,6 +102,22 @@ describe('with a TurnGenerator', () => {
             });
           });
         });
+
+        describe('when giveUp() is called before turn finished', () => {
+          beforeEach(() => directLineJS.giveUp());
+
+          describe('when turn finished', () => {
+            beforeEach(() => incomingActivityQueue.push(END_TURN));
+
+            test('should not call next turn', () => expect(nextTurn).toHaveBeenCalledTimes(2));
+
+            describe('when giveUp() is called again', () => {
+              beforeEach(() => directLineJS.giveUp());
+
+              test('should call next turn', () => expect(nextTurn).toHaveBeenCalledTimes(3));
+            });
+          });
+        });
       });
     });
   });
