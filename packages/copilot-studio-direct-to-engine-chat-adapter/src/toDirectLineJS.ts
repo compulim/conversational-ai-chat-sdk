@@ -126,6 +126,8 @@ export default function toDirectLineJS(
           } else {
             giveUpDeferred = promiseWithResolvers<void>();
 
+            // TODO: Temporarily allowing `executeTurn()` to send `undefined` activity, we should change the `executeTurn` signature later.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             turnGenerator = executeTurn(undefined as any);
           }
         }
