@@ -123,7 +123,7 @@ describe.each(['auto' as const, 'rest' as const].slice(0, DEBUG_SINGLE_PERMUTATI
             generator = createHalfDuplexChatAdapter(strategy, {
               emitStartConversationEvent,
               onActivity,
-              retry: { factor: 1, minTimeout: 0, retries: 1 },
+              retry: { retries: 0 },
               signal: abortController.signal,
               telemetry: {
                 get correlationId() {
