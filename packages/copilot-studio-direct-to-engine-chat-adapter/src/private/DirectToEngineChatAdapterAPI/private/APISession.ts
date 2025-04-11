@@ -94,7 +94,7 @@ class APISession {
             if (!currentResponse.ok) {
               const error = new Error(`Server returned ${currentResponse.status} while calling the service.`);
 
-              this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
+              this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
 
               throw error;
             }
@@ -114,7 +114,7 @@ class APISession {
                     `HTTP REST response from start new conversation must have "${CONVERSATION_ID_HEADER_NAME}" in the header or "conversationId" in the body.`
                   );
 
-                  this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
+                  this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
 
                   throw error;
                 }
@@ -135,7 +135,7 @@ class APISession {
                   'Protocol mismatch. Server returning Server-Sent Events while client requesting REST API.'
                 );
 
-                this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
+                this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
 
                 throw error;
               }
@@ -148,7 +148,7 @@ class APISession {
                     `HTTP SSE response from start new conversation must have "${CONVERSATION_ID_HEADER_NAME}" in the header.`
                   );
 
-                  this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
+                  this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
 
                   throw error;
                 }
@@ -161,7 +161,7 @@ class APISession {
               if (!body) {
                 const error = new Error(`Server did not respond with body in event stream mode.`);
 
-                this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
+                this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
 
                 throw error;
               }
@@ -240,7 +240,7 @@ class APISession {
 
             const error = new Error(`Received unknown HTTP header "Content-Type: ${contentType}".`);
 
-            this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
+            this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.#post' });
 
             throw error;
           },
@@ -273,7 +273,7 @@ class APISession {
             //              1. We did not handle it, why call it "handledAt"?
             //              2. We should indicate this error is related to the protocol
             error instanceof Error &&
-              telemetry.trackException(error, {
+              telemetry.trackException?.(error, {
                 handledAt: 'DirectToEngineChatAdapterAPI.withRetries',
                 retryCount: this.#retry.retries + 1 + ''
               });

@@ -1,6 +1,10 @@
+/// <reference lib="esnext" />
+
+import { waitFor } from '@testduet/wait-for';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 
+import { readableStreamFrom } from 'iter-fest';
 import createHalfDuplexChatAdapter, {
   type ExecuteTurnFunction,
   type TurnGenerator
@@ -38,6 +42,8 @@ const DEBUG_SINGLE_PERMUTATION = true;
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
+jest.setTimeout(1_000);
 
 describe.each(['auto' as const, 'rest' as const].slice(0, DEBUG_SINGLE_PERMUTATION ? 1 : Infinity))(
   'Using "%s" transport',
@@ -94,7 +100,7 @@ describe.each(['auto' as const, 'rest' as const].slice(0, DEBUG_SINGLE_PERMUTATI
           let httpPostExecute: JestMockOf<DefaultHttpResponseResolver>;
           let httpPostSubscribe: JestMockOf<DefaultHttpResponseResolver>;
           let onActivity: JestMockOf<() => void>;
-          let trackException: JestMockOf<Telemetry['trackException']>;
+          let trackException: JestMockOf<Exclude<Telemetry['trackException'], undefined>>;
 
           beforeEach(() => {
             getCorrelationId = jest.fn(() => undefined);
@@ -105,7 +111,9 @@ describe.each(['auto' as const, 'rest' as const].slice(0, DEBUG_SINGLE_PERMUTATI
             httpPostExecute = jest.fn(throwOnCall<DefaultHttpResponseResolver>('httpPostExecute is not mocked'));
             httpPostSubscribe = jest.fn(throwOnCall<DefaultHttpResponseResolver>('httpPostSubscribe is not mocked'));
             onActivity = jest.fn<void, []>(() => {});
-            trackException = jest.fn(throwOnCall<Telemetry['trackException']>('trackException is not mocked'));
+            trackException = jest.fn(
+              throwOnCall<Exclude<Telemetry['trackException'], undefined>>('trackException is not mocked')
+            );
 
             server.use(http.post('http://test/conversations', httpPostConversation));
             server.use(http.post('http://test/conversations/c-00001', httpPostExecute));
@@ -134,8 +142,8 @@ describe.each(['auto' as const, 'rest' as const].slice(0, DEBUG_SINGLE_PERMUTATI
               let iteratorResult: IteratorResult<Activity, ExecuteTurnFunction>;
               let mockHTTPPostSubscribeReadableStream: JestMockOf<
                 () => {
-                  controller: ReadableStreamDefaultController<ArrayBuffer>;
-                  readableStream: ReadableStream<ArrayBuffer>;
+                  controller: ReadableStreamDefaultController;
+                  readableStream: ReadableStream;
                 }
               >;
 
@@ -233,10 +241,13 @@ data: end
                   }
 
                   result.value.controller?.enqueue(
-                    Buffer.from(`event: activity
-data: ${JSON.stringify({ from: { id: 'bot' }, text: 'Bot first message', type: 'message' })}
-
-`)
+                    Buffer.from(
+                      `event: activity\ndata: ${JSON.stringify({
+                        from: { id: 'bot' },
+                        text: 'Bot first message',
+                        type: 'message'
+                      })}\n\n`
+                    )
                   );
                 });
 
@@ -255,10 +266,13 @@ data: ${JSON.stringify({ from: { id: 'bot' }, text: 'Bot first message', type: '
                     }
 
                     result.value.controller?.enqueue(
-                      Buffer.from(`event: activity
-data: ${JSON.stringify({ from: { id: 'bot' }, text: 'Bot second message', type: 'message' })}
-
-`)
+                      Buffer.from(
+                        `event: activity\ndata: ${JSON.stringify({
+                          from: { id: 'bot' },
+                          text: 'Bot second message',
+                          type: 'message'
+                        })}\n\n`
+                      )
                     );
                   });
 
@@ -297,15 +311,19 @@ data: ${JSON.stringify({ from: { id: 'bot' }, text: 'Bot second message', type: 
                           // Execute turn is only called when there is an outgoing activity.
                           if (transport === 'auto') {
                             httpPostExecute.mockImplementationOnce(async () => {
-                              await completeExecuteResolvers.promise;
+                              const { controller, readableStream } = createReadableStreamWithController();
 
-                              return new HttpResponse(
-                                Buffer.from(`event: end
-data: end
+                              (async function () {
+                                controller.enqueue(Buffer.from(`event: activity\ndata: {}\n\n`));
 
-`),
-                                { headers: { 'content-type': 'text/event-stream' } }
-                              );
+                                await completeExecuteResolvers.promise;
+
+                                controller.enqueue(Buffer.from(`event: end\ndata: end\n\n`));
+                              })();
+
+                              return new HttpResponse(readableStream, {
+                                headers: { 'content-type': 'text/event-stream' }
+                              });
                             });
                           } else if (transport === 'rest') {
                             httpPostExecute.mockImplementationOnce(async () => {
@@ -405,11 +423,17 @@ data: end
                             }
 
                             mockHTTPPostSubscribeReadableStream.mock.results[0].value.controller.enqueue(
-                              Buffer.from(`event: activity
-data: ${JSON.stringify({ from: { id: 'bot' }, text: 'Bot third message', type: 'message' })}
-
-`)
+                              Buffer.from(
+                                `event: activity\ndata: ${JSON.stringify({
+                                  from: { id: 'bot' },
+                                  text: 'Bot third message',
+                                  type: 'message'
+                                })}\n\n`
+                              )
                             );
+
+                            // Wait for the third activity to be queued.
+                            await waitFor(() => expect(onActivity).toHaveBeenCalledTimes(3));
 
                             iteratorResult = await executeTurnGenerator.next();
                           });
@@ -423,12 +447,12 @@ data: ${JSON.stringify({ from: { id: 'bot' }, text: 'Bot third message', type: '
                           describe('when execute turn resolved and after iterate again', () => {
                             let iteratorResultPromise: Promise<IteratorResult<Activity, ExecuteTurnFunction>>;
 
-                            beforeEach(async () => {
+                            beforeEach(() => {
                               completeExecuteResolvers.resolve();
                               iteratorResultPromise = executeTurnGenerator.next();
                             });
 
-                            test('should complete', async () => {
+                            test('should complete', () => {
                               expect(iteratorResultPromise).resolves.toEqual({
                                 done: true,
                                 value: expect.any(Function)
@@ -438,7 +462,7 @@ data: ${JSON.stringify({ from: { id: 'bot' }, text: 'Bot third message', type: '
                         });
 
                         describe('when /subscribe has closed abruptly during iteration', () => {
-                          beforeEach(() => {
+                          beforeEach(async () => {
                             trackException.mockImplementation(() => {});
 
                             const result = mockHTTPPostSubscribeReadableStream.mock.results[0];
@@ -450,6 +474,9 @@ data: ${JSON.stringify({ from: { id: 'bot' }, text: 'Bot third message', type: '
                             }
 
                             result.value.controller.error(new Error('Something went wrong'));
+
+                            // Need to wait a while until the error is recognized and queued.
+                            await new Promise(resolve => setTimeout(resolve, 0));
                           });
 
                           test('next() should throw', async () => {
@@ -467,6 +494,14 @@ data: ${JSON.stringify({ from: { id: 'bot' }, text: 'Bot third message', type: '
               describe('when /subscribe has closed abruptly before executeTurn()', () => {
                 beforeEach(() => {
                   trackException.mockImplementation(() => {});
+
+                  // Make sure /execute don't fail sooner than /subscribe.
+                  httpPostExecute.mockImplementation(
+                    () =>
+                      new HttpResponse(readableStreamFrom([Buffer.from('event: end\ndata: end\n\n')]), {
+                        headers: { 'content-type': 'text/event-stream' }
+                      })
+                  );
 
                   const result = mockHTTPPostSubscribeReadableStream.mock.results[0];
 

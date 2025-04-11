@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext", "ESNext.Promise"]
+  },
+  "include": ["**/*.spec.ts", "**/*.test.ts"]
+}

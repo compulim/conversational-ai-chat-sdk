@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "declarationDir": "../lib/types/",
-    "lib": ["DOM", "DOM.AsyncIterable", "ESNext"],
+    "lib": ["DOM", "DOM.AsyncIterable", "ESNext", "ESNext.Promise"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,

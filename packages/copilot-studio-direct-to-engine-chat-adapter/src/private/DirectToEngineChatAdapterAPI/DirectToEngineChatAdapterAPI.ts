@@ -13,7 +13,7 @@ import {
 import APISession from './private/APISession';
 
 export class DirectToEngineChatAdapterAPIImpl implements HalfDuplexChatAdapterAPI {
-  constructor(strategy: Strategy, telemetry: Telemetry, session: APISession) {
+  constructor(strategy: Strategy, telemetry: Telemetry | undefined, session: APISession) {
     this.#session = session;
     this.#strategy = strategy;
     this.#telemetry = telemetry;
@@ -31,7 +31,7 @@ export class DirectToEngineChatAdapterAPIImpl implements HalfDuplexChatAdapterAP
     if (this.#busy) {
       const error = new Error('Another operation is in progress.');
 
-      this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.startNewConversation' });
+      this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.startNewConversation' });
 
       throw error;
     }
@@ -43,7 +43,7 @@ export class DirectToEngineChatAdapterAPIImpl implements HalfDuplexChatAdapterAP
         if (this.#session.conversationId) {
           const error = new Error('startNewConversation() cannot be called more than once.');
 
-          this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.startNewConversation' });
+          this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.startNewConversation' });
 
           throw error;
         }
@@ -66,7 +66,7 @@ export class DirectToEngineChatAdapterAPIImpl implements HalfDuplexChatAdapterAP
     if (this.#busy) {
       const error = new Error('Another operation is in progress.');
 
-      this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.executeTurn' });
+      this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.executeTurn' });
 
       throw error;
     }
@@ -78,7 +78,7 @@ export class DirectToEngineChatAdapterAPIImpl implements HalfDuplexChatAdapterAP
         if (!this.#session.conversationId) {
           const error = new Error(`startNewConversation() must be called before executeTurn().`);
 
-          this.#telemetry?.trackException(error, { handledAt: 'DirectToEngineChatAdapterAPI.executeTurn' });
+          this.#telemetry?.trackException?.(error, { handledAt: 'DirectToEngineChatAdapterAPI.executeTurn' });
 
           throw error;
         }

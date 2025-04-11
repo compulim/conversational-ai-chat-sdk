@@ -4,5 +4,5 @@ export type Telemetry = {
    */
   get correlationId(): string | undefined;
 
-  trackException(exception: unknown, customProperties?: Record<string, unknown>): void;
+  trackException?: ((exception: unknown, customProperties?: Record<string, unknown>) => void) | undefined;
 };

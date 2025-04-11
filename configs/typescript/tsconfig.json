@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "ESNext.Promise"],
     "module": "NodeNext", // "Node16" or higher is required for named exports.
     "strict": true,
     "target": "ESNext"

@@ -1,4 +1,3 @@
-import { readableStreamValuesWithSignal } from 'iter-fest';
 import { function_, object, optional, parse, pipe, transform, type InferInput } from 'valibot';
 import isAbortError from '../../private/isAbortError';
 import { type StartNewConversationInit } from '../../private/types/HalfDuplexChatAdapterAPI';
@@ -8,7 +7,7 @@ import { type Telemetry } from '../../types/Telemetry';
 import { DirectToEngineChatAdapterAPIImpl } from './DirectToEngineChatAdapterAPI';
 import { directToEngineChatAdapterAPIInitSchema } from './DirectToEngineChatAdapterAPIInit';
 import APISession from './private/APISession';
-import asyncIteratorWithDrain from './private/asyncIteratorWithDrain';
+import QueueWithAvailable from './private/QueueWithAvailable';
 
 type StrategySupportExperimentalSubscribeActivities = Strategy & {
   experimental_prepareSubscribeActivities: Exclude<Strategy['experimental_prepareSubscribeActivities'], undefined>;
@@ -24,9 +23,25 @@ const directToEngineChatAdapterAPIWithExecuteViaSubscribeInitSchema = object({
   )
 });
 
+const MAX_ACTIVITY_PER_TURN = 1_000;
+
 type DirectToEngineChatAdapterAPIWithExecuteViaSubscribeInit = InferInput<
   typeof directToEngineChatAdapterAPIWithExecuteViaSubscribeInitSchema
 >;
+
+async function iterate<T>(iterable: AsyncIterableIterator<T>, onIterate: (value: T) => void): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      for await (const value of iterable) {
+        onIterate(value);
+      }
+
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
 
 export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends DirectToEngineChatAdapterAPIImpl {
   constructor(
@@ -41,7 +56,7 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
     if (!strategy.experimental_prepareSubscribeActivities) {
       const error = new Error(`This strategy does not support subscribe activities.`);
 
-      telemetry?.trackException(error, {
+      telemetry?.trackException?.(error, {
         handledAt: 'DirectToEngineChatAdapterAPIWithExecuteViaSubscribe.constructor'
       });
 
@@ -55,31 +70,13 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
     this.#onActivity = onActivity;
     this.#session = session;
     this.#strategy = strategy;
-    this.#signal = signal;
     this.#telemetry = telemetry;
-
-    let controller: ReadableStreamDefaultController | undefined;
-
-    this.#subscribingActivities = new ReadableStream({
-      start(c) {
-        controller = c;
-      }
-    });
-
-    if (!controller) {
-      throw new Error('ASSERTION ERROR: ReadableStreamDefaultController should be assigned');
-    }
-
-    this.#subscribingActivitiesController = controller;
   }
 
+  #subscribingQueue: QueueWithAvailable<Activity> = new QueueWithAvailable<Activity>();
   #onActivity: (() => void) | undefined;
   #session: APISession;
-  #subscribeRejectReason: unknown;
-  #signal: AbortSignal | undefined;
   #strategy: StrategySupportExperimentalSubscribeActivities;
-  #subscribingActivities: ReadableStream<Activity>;
-  #subscribingActivitiesController: ReadableStreamDefaultController<Activity>;
   #telemetry: Telemetry | undefined;
 
   async #startSubscribe() {
@@ -95,18 +92,17 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
       });
 
       for await (const activity of iterator) {
-        this.#subscribingActivitiesController.enqueue(activity);
+        this.#subscribingQueue.enqueue(activity);
         this.#onActivity?.();
       }
     } catch (error) {
       // Abort may cause fetch() to throw.
       if (!isAbortError(error)) {
-        this.#telemetry?.trackException(error, {
+        this.#telemetry?.trackException?.(error, {
           handledAt: 'DirectToEngineChatAdapterAPI.experimental_subscribeActivities'
         });
 
-        this.#subscribingActivitiesController.error(error);
-        this.#subscribeRejectReason = error;
+        this.#subscribingQueue.error(error);
       }
     }
   }
@@ -130,53 +126,40 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
     const executeTurn_ = super.executeTurn.bind(this);
 
     return async function* (this: DirectToEngineChatAdapterAPIWithExecuteViaSubscribe) {
-      if (this.#subscribeRejectReason) {
-        throw this.#subscribeRejectReason;
-      }
-
-      const abortController = new AbortController();
-
-      this.#signal?.addEventListener('abort', () => abortController.abort(), {
-        once: true,
-        signal: abortController.signal
-      });
-
-      if (activity) {
-        (async () => {
-          try {
-            for await (const _ of executeTurn_(activity)) {
-              // Ignore activities return by execute turn.
-            }
-          } finally {
-            abortController.abort();
-          }
-        })();
-      }
-
-      const abortAfterDrain = !activity;
-
       try {
-        yield* asyncIteratorWithDrain(
-          readableStreamValuesWithSignal(this.#subscribingActivities, {
-            // TODO: Add test to prove preventCancel is important.
-            //       1. While subscribe
-            //       2. Run execute, then end it
-            //       3. Add an activity to subscribe
-            //       4. Run execute again
-            //       5. EXPECT: Should get activities from /subscribe
-            preventCancel: true,
-            signal: abortController.signal
-          }),
-          () => abortAfterDrain && abortController.abort()
-        );
-      } catch (error) {
-        if (!isAbortError(error)) {
-          this.#telemetry?.trackException(error, {
-            handledAt: 'DirectToEngineChatAdapterAPIWithExecuteViaSubscribe.executeTurn'
-          });
+        const unblockResolvers = Promise.withResolvers<void>();
 
-          throw error;
+        const executePromise = activity
+          ? iterate(executeTurn_(activity), () => unblockResolvers.resolve())
+          : Promise.resolve();
+
+        await Promise.race([executePromise, unblockResolvers.promise]);
+
+        for (let index = 0; index < MAX_ACTIVITY_PER_TURN; index++) {
+          const nextActivity = this.#subscribingQueue.shift();
+
+          if (nextActivity) {
+            yield nextActivity;
+
+            continue;
+          }
+
+          const result = await Promise.race([
+            executePromise.then(() => 'execute finished' as const),
+            this.#subscribingQueue.available().then(() => 'activity available' as const)
+          ]);
+
+          if (result === 'execute finished') {
+            break;
+          }
         }
+      } catch (error) {
+        // Network error in /subscribe, we will throw this.
+        this.#telemetry?.trackException?.(error, {
+          handledAt: 'DirectToEngineChatAdapterAPIWithExecuteViaSubscribe.executeTurn'
+        });
+
+        throw error;
       }
     }.call(this);
   }

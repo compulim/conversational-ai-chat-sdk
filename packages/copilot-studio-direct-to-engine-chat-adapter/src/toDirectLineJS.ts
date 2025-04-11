@@ -3,25 +3,26 @@ import { Observable, asyncGeneratorWithLastValue } from 'iter-fest';
 import { onErrorResumeNext } from 'on-error-resume-next';
 import { v4 } from 'uuid';
 
-import { type TurnGenerator } from './createHalfDuplexChatAdapter';
+import { type ExecuteTurnFunction, type TurnGenerator } from './createHalfDuplexChatAdapter';
 import DeferredObservable from './private/DeferredObservable';
+import isAbortError from './private/isAbortError';
 import promiseWithResolvers from './private/promiseWithResolvers';
 import shareObservable from './private/shareObservable';
 import { type Activity } from './types/Activity';
 import { type Attachment } from './types/Attachment';
 import { type ActivityId, type DirectLineJSBotConnection } from './types/DirectLineJSBotConnection';
 
-function once(fn: () => Promise<void>): () => Promise<void>;
-function once(fn: () => void): () => void;
+function once<T = void>(fn: (value: T) => Promise<void>): (value: T) => Promise<void>;
+function once<T = void>(fn: (value: T) => void): (value: T) => void;
 
-function once(fn: () => Promise<void> | void): () => Promise<void> | void {
+function once<T>(fn: (value: T) => Promise<void> | void): (value: T) => Promise<void> | void {
   let called = false;
 
-  return () => {
+  return value => {
     if (!called) {
       called = true;
 
-      return fn();
+      return fn(value);
     }
   };
 }
@@ -50,7 +51,8 @@ export default function toDirectLineJS(
       connectionStatusDeferredObservable.next(1);
 
       let turnGenerator: TurnGenerator = halfDuplexChatAdapter;
-      let handleAcknowledgementOnce: () => Promise<void> | void = once(async () => {
+      let handleRejectionOnce: ((error: unknown) => void) | undefined;
+      let handleAcknowledgementOnce: () => void = once(async () => {
         connectionStatusDeferredObservable.next(2);
         await 0; // HACK: Web Chat need a spare cycle between connectionStatus$ change and activity$ subscription.
       });
@@ -75,6 +77,10 @@ export default function toDirectLineJS(
           const result = await Promise.race([postActivityDeferred.promise, giveUpDeferred.promise]);
 
           if (result) {
+            // TODO: Add test
+            // 1. Use AbortSignal to abort all iterations. toDirectLineJS don't know about AbortSignal, only APISession/TurnGenerator does
+            // 2. Call postActivity()
+            // EXPECT: postActivity().subscribe() should error out.
             const [activity, resolvePostActivity, rejectPostActivity] = result;
 
             try {
@@ -126,17 +132,25 @@ export default function toDirectLineJS(
               observer.next(patchActivity({ ...activity, id: activityId }));
               resolvePostActivity(activityId);
             });
+
+            handleRejectionOnce = once<unknown>(rejectPostActivity);
           } else {
             giveUpDeferred = promiseWithResolvers<void>();
 
             // TODO: Temporarily allowing `executeTurn()` to send `undefined` activity, we should change the `executeTurn` signature later.
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             turnGenerator = executeTurn(undefined as any);
+
+            handleRejectionOnce = undefined;
           }
         }
       } catch (error) {
-        console.error('Failed to communicate with the chat adapter.', error);
+        if (!isAbortError(error)) {
+          console.error('Failed to communicate with the chat adapter.', error);
 
+          handleRejectionOnce?.(error);
+        }
+      } finally {
         connectionStatusDeferredObservable.next(4);
       }
     })();
