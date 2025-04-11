@@ -34,7 +34,7 @@ test('Scenario: continue to drain /subscribe until /execute is finished', async 
     readableStreamFrom([encoder.encode('event: end\ndata:end\n\n')])
   );
 
-  let subscribeController: ReadableStreamDefaultController;
+  let subscribeController: ReadableStreamDefaultController | undefined;
   let subscribeStream: ReadableStream;
 
   serverMock.httpPostSubscribe.createResponseStreamForSSE.mockImplementationOnce(async () => {
