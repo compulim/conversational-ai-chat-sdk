@@ -33,7 +33,7 @@ const createExecuteTurn = (
     if (obsoleted) {
       const error = new Error('This executeTurn() function is obsoleted. Please use a new one.');
 
-      init?.telemetry?.trackException(error, { handledAt: 'createHalfDuplexChatAdapter.createExecuteTurn' });
+      init?.telemetry?.trackException?.(error, { handledAt: 'createHalfDuplexChatAdapter.createExecuteTurn' });
 
       throw error;
     }
