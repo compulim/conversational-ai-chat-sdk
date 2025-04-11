@@ -34,7 +34,7 @@ test('Scenario: continue to drain /subscribe until /execute is finished', async 
     readableStreamFrom([encoder.encode('event: end\ndata:end\n\n')])
   );
 
-  let subscribeController: ReadableStreamDefaultController;
+  let subscribeController: ReadableStreamDefaultController | undefined;
   let subscribeStream: ReadableStream;
 
   serverMock.httpPostSubscribe.createResponseStreamForSSE.mockImplementationOnce(async () => {
@@ -56,6 +56,10 @@ test('Scenario: continue to drain /subscribe until /execute is finished', async 
 
   // THEN: POST /subscribe should be called.
   expect(serverMock.httpPostSubscribe.responseResolver).toHaveBeenCalledTimes(1);
+
+  if (!subscribeController) {
+    throw new Error('ASSERTION ERROR');
+  }
 
   // GIVEN: Subscribe stream returns an activity.
   subscribeController.enqueue(
