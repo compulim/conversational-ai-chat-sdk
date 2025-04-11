@@ -3,7 +3,7 @@ import { Observable, asyncGeneratorWithLastValue } from 'iter-fest';
 import { onErrorResumeNext } from 'on-error-resume-next';
 import { v4 } from 'uuid';
 
-import { type ExecuteTurnFunction, type TurnGenerator } from './createHalfDuplexChatAdapter';
+import { type TurnGenerator } from './createHalfDuplexChatAdapter';
 import DeferredObservable from './private/DeferredObservable';
 import isAbortError from './private/isAbortError';
 import promiseWithResolvers from './private/promiseWithResolvers';
