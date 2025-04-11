@@ -30,17 +30,9 @@ type DirectToEngineChatAdapterAPIWithExecuteViaSubscribeInit = InferInput<
 >;
 
 async function iterate<T>(iterable: AsyncIterableIterator<T>, onIterate: (value: T) => void): Promise<void> {
-  return new Promise(async (resolve, reject) => {
-    try {
-      for await (const value of iterable) {
-        onIterate(value);
-      }
-
-      resolve();
-    } catch (error) {
-      reject(error);
-    }
-  });
+  for await (const value of iterable) {
+    onIterate(value);
+  }
 }
 
 export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends DirectToEngineChatAdapterAPIImpl {

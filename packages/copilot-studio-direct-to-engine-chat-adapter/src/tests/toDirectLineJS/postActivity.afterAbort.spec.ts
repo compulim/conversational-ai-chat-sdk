@@ -3,7 +3,6 @@ import { type ConnectionStatus } from 'botframework-directlinejs';
 import { type JestMockOf } from '../../private/types/JestMockOf';
 import toDirectLineJS from '../../toDirectLineJS';
 import { type Activity } from '../../types/Activity';
-import mockTurnGenerator from './private/mockTurnGenerator';
 
 beforeAll(() => jest.spyOn(console, 'error').mockReturnValue());
 afterAll(() => jest.restoreAllMocks());
@@ -18,8 +17,10 @@ describe('with a TurnGenerator that emit error on next()', () => {
     connectionStatusObserver = jest.fn();
 
     directLineJS = toDirectLineJS(
+      // eslint-disable-next-line require-yield
       (async function* () {
         // First turn is fine, but fail on second turn.
+        // eslint-disable-next-line require-yield
         return async function* () {
           throw new Error('Artificial error');
         };

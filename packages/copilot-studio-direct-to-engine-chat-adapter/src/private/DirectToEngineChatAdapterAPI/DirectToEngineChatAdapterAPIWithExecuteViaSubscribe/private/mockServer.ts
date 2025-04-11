@@ -4,6 +4,7 @@ import { type DefaultHttpResponseResolver } from '../../../types/DefaultHttpResp
 import { type JestMockOf } from '../../../types/JestMockOf';
 
 function createResponseResolver() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createResponseBodyForREST: JestMockOf<() => Promise<any>> = jest.fn(() => {
     throw new Error('"createResponseBodyForREST" is not mocked');
   });
