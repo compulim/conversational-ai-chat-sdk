@@ -2,6 +2,7 @@ import { readableStreamFrom } from 'iter-fest';
 import { HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import type { Activity } from '../../../types/Activity';
+import ignoreUnhandledRejection from '../../tests/private/ignoreUnhandledRejection';
 import DirectToEngineChatAdapterAPIWithExecuteViaSubscribe from '../DirectToEngineChatAdapterAPIWithExecuteViaSubscribe';
 import mockServer from './private/mockServer';
 
@@ -21,14 +22,9 @@ describe('setup', () => {
   beforeEach(() => {
     serverMock = mockServer(server);
 
-    api = new DirectToEngineChatAdapterAPIWithExecuteViaSubscribe(
-      {
-        experimental_prepareSubscribeActivities: async () => ({ baseURL: serverMock.baseURL }),
-        prepareExecuteTurn: async () => ({ baseURL: serverMock.baseURL }),
-        prepareStartNewConversation: async () => ({ baseURL: serverMock.baseURL })
-      },
-      { retry: { factor: 1, retries: 1 } }
-    );
+    api = new DirectToEngineChatAdapterAPIWithExecuteViaSubscribe(serverMock.strategy, {
+      retry: { retries: 0 }
+    });
   });
 
   describe('when startConversation iteration is finished', () => {
@@ -61,6 +57,7 @@ describe('setup', () => {
         });
 
         executeTurnIteratorNextPromise = executeTurnIterator.next();
+        ignoreUnhandledRejection(executeTurnIteratorNextPromise);
 
         await new Promise(resolve => setTimeout(resolve, 200));
 

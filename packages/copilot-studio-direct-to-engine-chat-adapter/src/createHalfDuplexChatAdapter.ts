@@ -1,25 +1,20 @@
+import { boolean, object, optional, string, type InferInput } from 'valibot';
 import DirectToEngineChatAdapterAPI from './private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPI';
+import { directToEngineChatAdapterAPIInitSchema } from './private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIInit';
 import { type ExecuteTurnInit, type HalfDuplexChatAdapterAPI } from './private/types/HalfDuplexChatAdapterAPI';
 import { type Activity } from './types/Activity';
 import { type Strategy } from './types/Strategy';
-import { type Telemetry } from './types/Telemetry';
 
 type ExecuteTurnFunction = (activity: Activity, init?: ExecuteTurnInit | undefined) => TurnGenerator;
 
-type CreateHalfDuplexChatAdapterInit = {
-  emitStartConversationEvent?: boolean | undefined;
-  locale?: string | undefined;
-  retry?:
-    | Readonly<{
-        factor?: number | undefined;
-        minTimeout?: number | undefined;
-        maxTimeout?: number | undefined;
-        randomize?: boolean | undefined;
-        retries?: number | undefined;
-      }>
-    | undefined;
-  telemetry?: Telemetry | undefined;
-};
+const createHalfDuplexChatAdapterInitSchema = object({
+  emitStartConversationEvent: optional(boolean('"emitStartConversationEvent" must be a boolean.')),
+  locale: optional(string('"locale" must be a string.')),
+  retry: directToEngineChatAdapterAPIInitSchema.entries.retry,
+  telemetry: directToEngineChatAdapterAPIInitSchema.entries.telemetry
+});
+
+type CreateHalfDuplexChatAdapterInit = InferInput<typeof createHalfDuplexChatAdapterInitSchema>;
 
 type TurnGenerator = AsyncGenerator<Activity, ExecuteTurnFunction, undefined>;
 
@@ -67,4 +62,9 @@ export default function createHalfDuplexChatAdapter(
   })();
 }
 
-export type { CreateHalfDuplexChatAdapterInit, ExecuteTurnFunction, TurnGenerator };
+export {
+  createHalfDuplexChatAdapterInitSchema,
+  type CreateHalfDuplexChatAdapterInit,
+  type ExecuteTurnFunction,
+  type TurnGenerator
+};

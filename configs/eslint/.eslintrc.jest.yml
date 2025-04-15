@@ -5,3 +5,5 @@ rules:
   react/display-name: off
   # Disable for conveniences
   react/prop-types: off
+  # Disable for Jest mocks
+  '@typescript-eslint/no-var-requires': off

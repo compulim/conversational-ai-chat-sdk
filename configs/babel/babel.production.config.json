@@ -9,5 +9,14 @@
     "../../**/*.test.jsx",
     "../../**/*.test.ts",
     "../../**/*.test.tsx"
+  ],
+  "plugins": [
+    [
+      "@babel/plugin-transform-runtime",
+      {
+        "corejs": 3,
+        "version": "7.22.6"
+      }
+    ]
   ]
 }

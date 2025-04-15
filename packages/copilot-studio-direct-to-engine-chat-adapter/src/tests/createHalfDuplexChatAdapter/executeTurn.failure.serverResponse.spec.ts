@@ -58,13 +58,13 @@ describe.each(['auto' as const, 'rest' as const])('Using "%s" transport', transp
       let getCorrelationId: JestMockOf<() => string | undefined>;
       let httpPostConversation: JestMockOf<DefaultHttpResponseResolver>;
       let httpPostExecute: JestMockOf<DefaultHttpResponseResolver>;
-      let trackException: JestMockOf<Telemetry['trackException']>;
+      let trackException: JestMockOf<Exclude<Telemetry['trackException'], undefined>>;
 
       beforeEach(() => {
         getCorrelationId = jest.fn(() => undefined);
         httpPostConversation = jest.fn(NOT_MOCKED<DefaultHttpResponseResolver>);
         httpPostExecute = jest.fn(NOT_MOCKED<DefaultHttpResponseResolver>);
-        trackException = jest.fn(NOT_MOCKED<Telemetry['trackException']>);
+        trackException = jest.fn(NOT_MOCKED<Exclude<Telemetry['trackException'], undefined>>);
 
         server.use(http.post('http://test/conversations', httpPostConversation));
         server.use(http.post('http://test/conversations/c-00001', httpPostExecute));

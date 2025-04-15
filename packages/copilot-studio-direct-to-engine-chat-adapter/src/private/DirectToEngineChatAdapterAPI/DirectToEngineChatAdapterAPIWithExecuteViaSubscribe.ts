@@ -1,11 +1,13 @@
-import { function_, object, optional, parse, pipe, transform, type InferInput } from 'valibot';
+import { parse } from 'valibot';
 import isAbortError from '../../private/isAbortError';
 import { type StartNewConversationInit } from '../../private/types/HalfDuplexChatAdapterAPI';
 import { type Activity } from '../../types/Activity';
 import { type Strategy } from '../../types/Strategy';
 import { type Telemetry } from '../../types/Telemetry';
 import { DirectToEngineChatAdapterAPIImpl } from './DirectToEngineChatAdapterAPI';
-import { directToEngineChatAdapterAPIInitSchema } from './DirectToEngineChatAdapterAPIInit';
+import directToEngineChatAdapterAPIWithExecuteViaSubscribeInitSchema, {
+  type DirectToEngineChatAdapterAPIWithExecuteViaSubscribeInit
+} from './DirectToEngineChatAdapterAPIWithExecuteViaSubscribeInit';
 import APISession from './private/APISession';
 import QueueWithAvailable from './private/QueueWithAvailable';
 
@@ -13,21 +15,9 @@ type StrategySupportExperimentalSubscribeActivities = Strategy & {
   experimental_prepareSubscribeActivities: Exclude<Strategy['experimental_prepareSubscribeActivities'], undefined>;
 };
 
-const directToEngineChatAdapterAPIWithExecuteViaSubscribeInitSchema = object({
-  ...directToEngineChatAdapterAPIInitSchema.entries,
-  onActivity: optional(
-    pipe(
-      function_(),
-      transform(value => value as () => void)
-    )
-  )
-});
-
+const ACTIVITY_AVAILABLE = Symbol('activity available');
+const EXECUTE_FINISHED = Symbol('execute finished');
 const MAX_ACTIVITY_PER_TURN = 1_000;
-
-type DirectToEngineChatAdapterAPIWithExecuteViaSubscribeInit = InferInput<
-  typeof directToEngineChatAdapterAPIWithExecuteViaSubscribeInitSchema
->;
 
 async function iterate<T>(iterable: AsyncIterableIterator<T>, onIterate: (value: T) => void): Promise<void> {
   for await (const value of iterable) {
@@ -40,7 +30,7 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
     strategy: StrategySupportExperimentalSubscribeActivities,
     init?: DirectToEngineChatAdapterAPIWithExecuteViaSubscribeInit
   ) {
-    const { onActivity, retry, signal, telemetry } = parse(
+    const { onActivity, retry, signal, telemetry, subscribeSilenceTimeout } = parse(
       directToEngineChatAdapterAPIWithExecuteViaSubscribeInitSchema,
       init
     );
@@ -63,13 +53,15 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
     this.#session = session;
     this.#strategy = strategy;
     this.#telemetry = telemetry;
+    this.#subscribeSilenceTimeout = subscribeSilenceTimeout;
   }
 
-  #subscribingQueue: QueueWithAvailable<Activity> = new QueueWithAvailable<Activity>();
   #onActivity: (() => void) | undefined;
   #session: APISession;
   #strategy: StrategySupportExperimentalSubscribeActivities;
+  #subscribingQueue: QueueWithAvailable<Activity> = new QueueWithAvailable<Activity>();
   #telemetry: Telemetry | undefined;
+  #subscribeSilenceTimeout: number;
 
   async #startSubscribe() {
     const { baseURL, body, headers } = await this.#strategy.experimental_prepareSubscribeActivities!();
@@ -137,11 +129,15 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
           }
 
           const result = await Promise.race([
-            executePromise.then(() => 'execute finished' as const),
-            this.#subscribingQueue.available().then(() => 'activity available' as const)
+            // Execute will finish after 1 second of silence from /subscribe, regardless of next() is called or not.
+            // For simplicity, we only do the 1 second silence countdown on the call to next().
+            executePromise
+              .then(() => new Promise(resolve => setTimeout(resolve, this.#subscribeSilenceTimeout)))
+              .then(() => EXECUTE_FINISHED),
+            this.#subscribingQueue.available().then(() => ACTIVITY_AVAILABLE)
           ]);
 
-          if (result === 'execute finished') {
+          if (result === EXECUTE_FINISHED) {
             break;
           }
         }

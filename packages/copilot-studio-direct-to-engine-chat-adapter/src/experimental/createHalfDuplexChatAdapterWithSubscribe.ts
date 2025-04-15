@@ -1,4 +1,16 @@
-import type { CreateHalfDuplexChatAdapterInit } from '../createHalfDuplexChatAdapter';
+import {
+  function_,
+  instance,
+  maxValue,
+  minValue,
+  number,
+  object,
+  optional,
+  pipe,
+  transform,
+  type InferInput
+} from 'valibot';
+import { createHalfDuplexChatAdapterInitSchema } from '../createHalfDuplexChatAdapter';
 import DirectToEngineChatAdapterAPIWithExecuteViaSubscribe from '../private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIWithExecuteViaSubscribe';
 import { type ExecuteTurnInit, type HalfDuplexChatAdapterAPI } from '../private/types/HalfDuplexChatAdapterAPI';
 import { type Activity } from '../types/Activity';
@@ -6,10 +18,27 @@ import { type Strategy } from '../types/Strategy';
 
 type ExecuteTurnFunction = (activity: Activity | undefined, init?: ExecuteTurnInit | undefined) => TurnGenerator;
 
-type CreateHalfDuplexChatAdapterWithSubscribeInit = CreateHalfDuplexChatAdapterInit & {
-  onActivity?: (() => void) | undefined;
-  signal?: AbortSignal | undefined;
-};
+const createHalfDuplexChatAdapterWithSubscribeInitSchema = object({
+  ...createHalfDuplexChatAdapterInitSchema.entries,
+  onActivity: optional(
+    pipe(
+      function_('"onActivity" must be a function'),
+      transform(value => value as () => void)
+    )
+  ),
+  signal: optional(instance(AbortSignal, '"signal" must be of type AbortSignal')),
+  subscribeSilenceTimeout: optional(
+    pipe(
+      number('"subscribeSilenceTimeout" must be a number'),
+      maxValue(60_000, '"subscribeSilenceTimeout" must be equal to or less than 60_000'),
+      minValue(0, '"subscribeSilenceTimeout" must be equal to or greater than 0')
+    )
+  )
+});
+
+type CreateHalfDuplexChatAdapterWithSubscribeInit = InferInput<
+  typeof createHalfDuplexChatAdapterWithSubscribeInitSchema
+>;
 
 type TurnGenerator = AsyncGenerator<Activity, ExecuteTurnFunction, undefined>;
 
@@ -49,6 +78,7 @@ export default function createHalfDuplexChatAdapter(
       onActivity: init.onActivity,
       retry: init.retry,
       signal: init.signal,
+      subscribeSilenceTimeout: init.subscribeSilenceTimeout,
       telemetry: init.telemetry
     });
 
@@ -61,4 +91,4 @@ export default function createHalfDuplexChatAdapter(
   })();
 }
 
-export type { CreateHalfDuplexChatAdapterWithSubscribeInit, ExecuteTurnFunction, TurnGenerator };
+export { type CreateHalfDuplexChatAdapterWithSubscribeInit, type ExecuteTurnFunction, type TurnGenerator };

@@ -1,13 +1,4 @@
 {
-  "plugins": [
-    [
-      "@babel/plugin-transform-runtime",
-      {
-        "corejs": 3,
-        "version": "7.22.6"
-      }
-    ]
-  ],
   "overrides": [
     {
       "test": ["../../**/*.ts", "../../**/*.tsx"],

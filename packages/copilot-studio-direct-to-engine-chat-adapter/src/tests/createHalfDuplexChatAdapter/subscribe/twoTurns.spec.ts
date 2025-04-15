@@ -3,8 +3,9 @@ import { setupServer } from 'msw/node';
 import createHalfDuplexChatAdapter, {
   type ExecuteTurnFunction
 } from '../../../experimental/createHalfDuplexChatAdapterWithSubscribe';
-import mockServer from '../../../private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIWithExecuteViaSubscribe/private/mockServer';
 import createReadableStreamWithController from '../../../private/createReadableStreamWithController';
+import hasResolved from '../../../private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIWithExecuteViaSubscribe/private/hasResolved';
+import mockServer from '../../../private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIWithExecuteViaSubscribe/private/mockServer';
 
 let abortController: AbortController;
 const encoder = new TextEncoder();
@@ -13,6 +14,9 @@ const server = setupServer();
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => jest.useRealTimers());
 
 jest.setTimeout(1_000);
 
@@ -82,10 +86,16 @@ test('Scenario: continue to drain /subscribe until /execute is finished', async 
   });
 
   // WHEN: Call execute().next() again.
-  const next2Value = await turnGenerator2.next();
+  const next2Promise = turnGenerator2.next();
+
+  // THEN: It should not have been resolved yet.
+  await expect(hasResolved(next2Promise)).resolves.toBe(false);
+
+  // WHEN: After 1 second (silence timeout).
+  jest.advanceTimersByTime(1_000);
 
   // THEN: Should receive done.
-  expect(next2Value).toEqual({ done: true, value: expect.any(Function) });
+  await expect(next2Promise).resolves.toEqual({ done: true, value: expect.any(Function) });
 
   // GIVEN: Subscribe stream returns another activity.
   subscribeController.enqueue(
@@ -99,7 +109,7 @@ test('Scenario: continue to drain /subscribe until /execute is finished', async 
   );
 
   // WHEN: executeTurn() is called.
-  const executeTurn2 = next2Value.value as ExecuteTurnFunction;
+  const executeTurn2 = (await next2Promise).value as ExecuteTurnFunction;
   const turnGenerator3 = executeTurn2({ from: { id: 'user' }, text: 'User second message', type: 'message' });
 
   // THEN: execute().next() should receive the second activity.
@@ -109,8 +119,14 @@ test('Scenario: continue to drain /subscribe until /execute is finished', async 
   });
 
   // WHEN: Call execute().next() again.
-  const next3Value = await turnGenerator3.next();
+  const next3Promise = turnGenerator3.next();
+
+  // THEN: It should not have been resolved yet.
+  await expect(hasResolved(next3Promise)).resolves.toBe(false);
+
+  // WHEN: After 1 second (silence timeout).
+  jest.advanceTimersByTime(1_000);
 
   // THEN: Should receive done.
-  expect(next3Value).toEqual({ done: true, value: expect.any(Function) });
+  await expect(next3Promise).resolves.toEqual({ done: true, value: expect.any(Function) });
 });
