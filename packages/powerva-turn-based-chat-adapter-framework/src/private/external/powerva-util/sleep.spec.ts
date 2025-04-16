@@ -19,7 +19,7 @@ describe('sleep for 2 seconds', () => {
     promise = sleep(2_000);
   });
 
-  test('should be pending', () => Promise.all([expect(promise).toBePending(), jest.runAllTimersAsync()]));
+  test('should be pending', () => Promise.all([expect(promise).toBePending(), () => jest.runAllTimersAsync()]));
 
   describe('after 2 seconds', () => {
     beforeEach(() => jest.advanceTimersByTimeAsync(2_000));
