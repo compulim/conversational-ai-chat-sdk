@@ -16,17 +16,12 @@
     "bump:dev": "if [ `cat package.json | jq -r '.devDependencies | length'` -ne 0 ]; then npm install $(cat package.json | jq -r '(.pinDependencies // {}) as $p | ((.devDependencies // {}) | keys) | map(. + \"@\" + ($p[.] // [\"latest\"])[0]) | .[]'); fi",
     "bump:prod": "if [ `cat package.json | jq -r '.dependencies | length'` -ne 0 ]; then npm install --save-exact $(cat package.json | jq -r '(.pinDependencies // {}) as $p | ((.dependencies // {}) | keys) | map(. + \"@\" + ($p[.] // [\"latest\"])[0]) | .[]'); fi",
     "eslint": "npm run precommit",
-    "postinstall": "npm run postinstall:abort-controller-es5 && npm run postinstall:markdown-it-attrs-es5 && npm run postinstall:p-defer-es5",
-    "postinstall:abort-controller-es5": "cd .. && cd .. && cd node_modules && cd abort-controller-es5 && npm run postinstall",
-    "postinstall:markdown-it-attrs-es5": "cd .. && cd .. && cd node_modules && cd markdown-it-attrs-es5 && npm run postinstall",
-    "postinstall:p-defer-es5": "cd .. && cd .. && cd node_modules && cd p-defer-es5 && npm run postinstall",
     "precommit": "eslint .",
     "start": "concurrently --kill-others \"npm run start:*\"",
     "start:esbuild": "npm run build:esbuild -- --define:IS_DEVELOPMENT=true --servedir=./public --watch",
     "start:typescript": "npm run build:typescript -- --watch"
   },
   "dependencies": {
-    "botframework-webchat": "^4.15.8",
     "copilot-studio-direct-to-engine-chat-adapter": "^0.0.0-0",
     "jwt-decode": "^3.1.2",
     "path-to-regexp": "^6.2.2",
@@ -38,6 +33,8 @@
   "devDependencies": {
     "@types/react": "^18.2.18",
     "@types/react-dom": "^18.2.7",
+    "botframework-webchat": "^4.18.1-main.20250325.438c779",
+    "botframework-webchat-fluent-theme": "^4.18.1-main.20250313.cd86ef9",
     "concurrently": "^8.2.0",
     "esbuild": "^0.18.17",
     "typescript": "^5.1.6"
