@@ -55,8 +55,6 @@ const ReactWebChatShim = (props: Props) => {
     return () => abortController.abort();
   }, [props, setFluentThemeProvider, setWebChat]);
 
-  console.log(WebChat);
-
   return (
     <div style={{ display: 'contents' }}>
       {FluentThemeProvider && WebChat && (
