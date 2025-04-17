@@ -4,7 +4,8 @@
     "lib": ["DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "strict": true
+    "strict": true,
+    "types": ["jest", "node", "../../node_modules/network-information-types"]
   },
   "extends": "../../../configs/typescript/tsconfig.declaration.json"
 }

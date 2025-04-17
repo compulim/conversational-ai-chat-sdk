@@ -91,7 +91,7 @@
     "prettier": "^3.0.0",
     "tsup": "^8.0.1",
     "type-fest": "^4.10.0",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "base64-arraybuffer": "^1.0.2",

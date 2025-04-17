@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "declarationDir": "../lib/types/",
-    "lib": ["DOM"]
+    "lib": ["DOM"],
+    "types": ["jest", "node", "../../node_modules/network-information-types"]
   },
   "extends": "../../../configs/typescript/tsconfig.declaration.json"
 }

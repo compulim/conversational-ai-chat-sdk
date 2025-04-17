@@ -93,7 +93,7 @@
     "jest-environment-jsdom": "^29.6.2",
     "powerva-chat-adapter-test-util": "^0.0.1-0",
     "prettier": "^3.0.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "@babel/runtime-corejs3": "7.22.6",
