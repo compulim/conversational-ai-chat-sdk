@@ -48,7 +48,9 @@ const ReactWebChatShim = (props: Props) => {
         return;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setFluentThemeProvider(() => (window as any).WebChat.FluentThemeProvider);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setWebChat(() => (window as any)['WebChat'].ReactWebChat);
     })();
 
