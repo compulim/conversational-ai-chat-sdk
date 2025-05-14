@@ -18,10 +18,6 @@ import { type Strategy, type StrategyRequestInit } from './types/Strategy';
 import { type Telemetry } from './types/Telemetry';
 import { type Transport } from './types/Transport';
 
-declare global {
-  const env: { npm_package_version: string };
-}
-
 export {
   createHalfDuplexChatAdapter,
   EmbeddedAuthoringBotStrategy,
