@@ -111,7 +111,7 @@ data: end
           test('once', () => expect(httpPostConversation).toHaveBeenCalledTimes(1));
           test('with header "Accept" of "text/event-stream,application/json;q=0.9"', () =>
             expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe(
-              'text/event-stream,application/json;q=0.9'
+              'text/event-stream,application/json;q=0.9,*/*;q=0.8'
             ));
         });
 
@@ -160,7 +160,7 @@ data: end
                 test('once', () => expect(httpPostConversation).toHaveBeenCalledTimes(1));
                 test('with header "Accept" of "text/event-stream,application/json;q=0.9"', () =>
                   expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe(
-                    'text/event-stream,application/json;q=0.9'
+                    'text/event-stream,application/json;q=0.9,*/*;q=0.8'
                   ));
               });
 
@@ -188,7 +188,7 @@ data: end
                   test('once', () => expect(httpPostConversation).toHaveBeenCalledTimes(1));
                   test('with header "Accept" of "text/event-stream,application/json;q=0.9"', () =>
                     expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe(
-                      'text/event-stream,application/json;q=0.9'
+                      'text/event-stream,application/json;q=0.9,*/*;q=0.8'
                     ));
                 });
 

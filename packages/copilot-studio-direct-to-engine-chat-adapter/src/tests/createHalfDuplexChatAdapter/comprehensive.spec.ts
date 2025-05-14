@@ -140,11 +140,11 @@ data: end
             if (transport === 'auto') {
               test('with header "Accept" of "text/event-stream,application/json;q=0.9"', () =>
                 expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe(
-                  'text/event-stream,application/json;q=0.9'
+                  'text/event-stream,application/json;q=0.9,*/*;q=0.8'
                 ));
             } else if (transport === 'rest') {
               test('with header "Accept" of "application/json"', () =>
-                expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe('application/json'));
+                expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe('application/json,*/*;q=0.8'));
             }
 
             test('with header "Content-Type" of "application/json"', () =>
@@ -386,12 +386,12 @@ data: end
                       if (transport === 'auto') {
                         test('with header "Accept" of "text/event-stream,application/json;q=0.9"', () =>
                           expect(httpPostExecute.mock.calls[0][0].request.headers.get('accept')).toBe(
-                            'text/event-stream,application/json;q=0.9'
+                            'text/event-stream,application/json;q=0.9,*/*;q=0.8'
                           ));
                       } else if (transport === 'rest') {
                         test('with header "Accept" of "application/json"', () =>
                           expect(httpPostExecute.mock.calls[0][0].request.headers.get('accept')).toBe(
-                            'application/json'
+                            'application/json,*/*;q=0.8'
                           ));
                       }
 

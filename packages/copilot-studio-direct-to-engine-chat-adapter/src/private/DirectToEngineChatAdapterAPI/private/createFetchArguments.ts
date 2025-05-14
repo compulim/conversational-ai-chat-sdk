@@ -20,7 +20,9 @@ export default function createFetchArguments(
 
   headers.set(
     'accept',
-    strategyRequestInit.transport === 'rest' ? 'application/json' : 'text/event-stream,application/json;q=0.9'
+    strategyRequestInit.transport === 'rest'
+      ? 'application/json,*/*;q=0.8'
+      : 'text/event-stream,application/json;q=0.9,*/*;q=0.8'
   );
   headers.set('content-type', 'application/json');
   headers.set(
