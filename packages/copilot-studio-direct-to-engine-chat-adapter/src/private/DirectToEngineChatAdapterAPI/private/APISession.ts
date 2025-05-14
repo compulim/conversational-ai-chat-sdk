@@ -2,18 +2,16 @@ import { EventSourceParserStream, type ParsedEvent } from 'eventsource-parser/st
 import { asyncGeneratorWithLastValue } from 'iter-fest';
 import pRetry, { type Options as PRetryOptions } from 'p-retry';
 import { maxValue, minValue, number, parse, pipe, safeParse } from 'valibot';
-import { resolveURLWithQueryAndHash } from '../../../private/resolveURLWithQueryAndHash';
 import { parseBotResponse } from '../../../private/types/BotResponse';
 import { parseConversationId, type ConversationId } from '../../../private/types/ConversationId';
 import { type Activity } from '../../../types/Activity';
 import type { StrategyRequestInit } from '../../../types/Strategy';
 import { type Telemetry } from '../../../types/Telemetry';
-import { type Transport } from '../../../types/Transport';
 import {
   directToEngineChatAdapterAPIInitSchema,
   type DirectToEngineChatAdapterAPIInit
 } from '../DirectToEngineChatAdapterAPIInit';
-import { CHAT_ADAPTER_HEADER_NAME, CONVERSATION_ID_HEADER_NAME, CORRELATION_ID_HEADER_NAME } from './Constants';
+import { CONVERSATION_ID_HEADER_NAME } from './Constants';
 import createFetchArguments from './createFetchArguments';
 
 const MAX_CONTINUE_TURN = 999;

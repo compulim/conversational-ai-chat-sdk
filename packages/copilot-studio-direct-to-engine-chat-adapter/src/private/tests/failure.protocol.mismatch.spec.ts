@@ -110,7 +110,9 @@ data: end
         describe('should have POST to /conversations', () => {
           test('once', () => expect(httpPostConversation).toHaveBeenCalledTimes(1));
           test('with header "Accept" of "application/json"', () =>
-            expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe('application/json,*/*;q=0.8'));
+            expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe(
+              'application/json,*/*;q=0.8'
+            ));
         });
 
         test('should throw "Protocol mismatch" error', () =>

@@ -144,7 +144,9 @@ data: end
                 ));
             } else if (transport === 'rest') {
               test('with header "Accept" of "application/json"', () =>
-                expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe('application/json,*/*;q=0.8'));
+                expect(httpPostConversation.mock.calls[0][0].request.headers.get('accept')).toBe(
+                  'application/json,*/*;q=0.8'
+                ));
             }
 
             test('with header "Content-Type" of "application/json"', () =>
