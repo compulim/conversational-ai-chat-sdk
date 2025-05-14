@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `emitStartConversationEvent` option to `fromTurnBasedChatAdapterAPI` [@tdurnford](https://github.com/tdurnford)
 - Added give up my turn, by [@compulim](https://github.com/compulim), in PR [#62](https://github.com/compulim/conversational-ai-chat-sdk/pull/62)
+   - Fixed race conditions between give up my turn and post activity, by [@compulim](https://github.com/compulim), in PR [#65](https://github.com/compulim/conversational-ai-chat-sdk/pull/65)
 - (Experimental) Added experimental /subscribe endpoint, by [@compulim](https://github.com/compulim), in PR [#62](https://github.com/compulim/conversational-ai-chat-sdk/pull/62) and [#64](https://github.com/compulim/conversational-ai-chat-sdk/pull/64)
 - Added `*/*;q=0.8` to accept header, by [@compulim](https://github.com/compulim), in PR [#70](https://github.com/compulim/conversational-ai-chat-sdk/pull/70)
 
