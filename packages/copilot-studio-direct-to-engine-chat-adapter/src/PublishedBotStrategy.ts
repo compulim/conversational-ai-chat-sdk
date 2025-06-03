@@ -28,7 +28,7 @@ export default class PublishedBotStrategy implements Strategy {
     this.#transport = transport;
 
     const url = new URL(
-      `/powervirtualagents/dataverse-backed/authenticated/bots/${botSchema}/`,
+      `/copilotstudio/dataverse-backed/authenticated/bots/${botSchema}/`,
       environmentEndpointURL
     );
 
