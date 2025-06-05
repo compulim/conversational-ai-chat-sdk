@@ -30,20 +30,9 @@ function once<T>(fn: (value: T) => Promise<void> | void): (value: T) => Promise<
 export default function toDirectLineJS(
   halfDuplexChatAdapter: TurnGenerator
 ): DirectLineJSBotConnection & { giveUp: () => void } {
-  let nextSequenceId = 0;
   let giveUpDeferred = promiseWithResolvers<void>();
   let postActivityDeferred =
     promiseWithResolvers<readonly [Activity, (id: ActivityId) => void, (error: unknown) => void]>();
-
-  // TODO: Find out why replyToId is pointing to nowhere.
-  // TODO: Can the service add "timestamp" field?
-  // TODO: Can the service echo back the activity?
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const patchActivity = ({ replyToId: _, ...activity }: Activity & { replyToId?: string }): Activity => ({
-    ...activity,
-    channelData: { ...activity.channelData, 'webchat:sequence-id': nextSequenceId++ },
-    timestamp: new Date().toISOString()
-  });
 
   const activityDeferredObservable = new DeferredObservable<Activity>(observer => {
     (async function () {
@@ -64,7 +53,7 @@ export default function toDirectLineJS(
           for await (const activity of iterator) {
             await handleAcknowledgementOnce();
 
-            observer.next(patchActivity(activity));
+            observer.next(activity);
           }
 
           // All activities should be retrieved by now, we will start accepting "give up" signal from this point of time.
@@ -129,7 +118,7 @@ export default function toDirectLineJS(
             handleAcknowledgementOnce = once(() => {
               const activityId = v4() as ActivityId;
 
-              observer.next(patchActivity({ ...activity, id: activityId }));
+              observer.next({ ...activity, id: activityId });
               resolvePostActivity(activityId);
             });
 
