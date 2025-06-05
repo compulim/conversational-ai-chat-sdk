@@ -231,10 +231,8 @@ data: end
 
           test('should observe the first activity', () =>
             expect(activitiesObserver).toHaveBeenNthCalledWith(1, {
-              channelData: expect.anything(),
               from: { id: 'bot' },
               text: 'Hello, World!',
-              timestamp: expect.any(String),
               type: 'message'
             }));
 
@@ -272,10 +270,8 @@ data: end
 
           test('should observe the second activity', () =>
             expect(activitiesObserver).toHaveBeenNthCalledWith(2, {
-              channelData: expect.anything(),
               from: { id: 'bot' },
               text: 'Aloha!',
-              timestamp: expect.any(String),
               type: 'message'
             }));
 
@@ -315,10 +311,8 @@ data: end
 
           test('should observe the third activity', () =>
             expect(activitiesObserver).toHaveBeenNthCalledWith(3, {
-              channelData: expect.anything(),
               from: { id: 'bot' },
               text: '您好！',
-              timestamp: expect.any(String),
               type: 'message'
             }));
 
@@ -394,11 +388,9 @@ data: end
 
               test('should observe the echoback activity', () =>
                 expect(activitiesObserver).toHaveBeenNthCalledWith(4, {
-                  channelData: expect.anything(),
                   from: { id: 'u-00001' },
                   id: postActivityObserver.mock.calls[0][0],
                   text: 'Morning.',
-                  timestamp: expect.any(String),
                   type: 'message'
                 }));
 
@@ -456,10 +448,8 @@ data: end
 
               test('should observe the fourth activity', () =>
                 expect(activitiesObserver).toHaveBeenNthCalledWith(5, {
-                  channelData: expect.anything(),
                   from: { id: 'bot' },
                   text: 'Good morning!',
-                  timestamp: expect.any(String),
                   type: 'message'
                 }));
 
@@ -506,10 +496,8 @@ data: end
 
               test('should observe the fifth activity', () =>
                 expect(activitiesObserver).toHaveBeenNthCalledWith(6, {
-                  channelData: expect.anything(),
                   from: { id: 'bot' },
                   text: 'Goodbye!',
-                  timestamp: expect.any(String),
                   type: 'message'
                 }));
 
@@ -558,10 +546,8 @@ data: end
 
               test('should observe the sixth activity', () =>
                 expect(activitiesObserver).toHaveBeenNthCalledWith(7, {
-                  channelData: expect.anything(),
                   from: { id: 'bot' },
                   text: '再見！',
-                  timestamp: expect.any(String),
                   type: 'message'
                 }));
 
@@ -635,11 +621,9 @@ data: end
                           contentUrl: 'data:;base64,AQID'
                         }
                       ],
-                      channelData: expect.anything(),
                       from: { id: 'u-00001' },
                       id: postActivityObserver.mock.calls[0][0],
                       text: 'Here is the document.',
-                      timestamp: expect.any(String),
                       type: 'message'
                     }));
 
@@ -706,10 +690,8 @@ data: end
 
                   test('should observe the fourth activity', () =>
                     expect(activitiesObserver).toHaveBeenNthCalledWith(9, {
-                      channelData: expect.anything(),
                       from: { id: 'bot' },
                       text: 'Got it!',
-                      timestamp: expect.any(String),
                       type: 'message'
                     }));
                 });

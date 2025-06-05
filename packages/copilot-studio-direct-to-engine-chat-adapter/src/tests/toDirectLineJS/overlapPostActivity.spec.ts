@@ -108,19 +108,15 @@ describe('with a TurnGenerator', () => {
               test('twice', () => expect(activityObserver).toHaveBeenCalledTimes(3));
               test('with the first outgoing activity', () =>
                 expect(activityObserver).toHaveBeenNthCalledWith(2, {
-                  channelData: expect.anything(),
                   from: { id: 'u-00001' },
                   id: firstPostActivityObserver.mock.calls[0][0],
                   text: 'Aloha!',
-                  timestamp: expect.any(String),
                   type: 'message'
                 }));
               test('with the incoming activity', () =>
                 expect(activityObserver).toHaveBeenNthCalledWith(3, {
-                  channelData: expect.anything(),
                   from: { id: 'bot' },
                   text: 'Goodbye.',
-                  timestamp: expect.any(String),
                   type: 'message'
                 }));
             });

@@ -79,10 +79,8 @@ describe('with a TurnGenerator', () => {
       await waitUntilGreetingReceived.promise;
 
       expect(activityObserver).toHaveBeenNthCalledWith(1, {
-        channelData: expect.anything(),
         from: { id: 'bot' },
         text: 'Hello, World!',
-        timestamp: expect.any(String),
         type: 'message'
       });
     });

@@ -66,10 +66,8 @@ describe('with a TurnGenerator', () => {
       test('once', () => expect(activityObserver).toHaveBeenCalledTimes(1));
       test('with the activity', () =>
         expect(activityObserver).toHaveBeenNthCalledWith(1, {
-          channelData: expect.anything(),
           from: { id: 'bot' },
           text: 'Hello, World!',
-          timestamp: expect.any(String),
           type: 'message'
         }));
     });
@@ -123,20 +121,16 @@ describe('with a TurnGenerator', () => {
 
               test('with the incoming activity', () =>
                 expect(activityObserver).toHaveBeenNthCalledWith(1, {
-                  channelData: expect.anything(),
                   from: { id: 'bot' },
                   text: 'Hello, World!',
-                  timestamp: expect.any(String),
                   type: 'message'
                 }));
 
               test('with the outgoing activity', () =>
                 expect(activityObserver).toHaveBeenNthCalledWith(2, {
-                  channelData: expect.anything(),
                   from: { id: 'u-00001' },
                   id: postActivityObserver.mock.calls[0][0],
                   text: 'Aloha!',
-                  timestamp: expect.any(String),
                   type: 'message'
                 }));
             });
