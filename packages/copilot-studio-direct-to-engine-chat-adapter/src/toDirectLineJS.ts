@@ -34,6 +34,12 @@ export default function toDirectLineJS(
   let postActivityDeferred =
     promiseWithResolvers<readonly [Activity, (id: ActivityId) => void, (error: unknown) => void]>();
 
+  // TODO: Find out why replyToId is pointing to nowhere.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const patchActivity = ({ replyToId: _, ...activity }: Activity & { replyToId?: string }): Activity => ({
+    ...activity
+  });
+
   const activityDeferredObservable = new DeferredObservable<Activity>(observer => {
     (async function () {
       connectionStatusDeferredObservable.next(0);
@@ -53,7 +59,7 @@ export default function toDirectLineJS(
           for await (const activity of iterator) {
             await handleAcknowledgementOnce();
 
-            observer.next(activity);
+            observer.next(patchActivity(activity));
           }
 
           // All activities should be retrieved by now, we will start accepting "give up" signal from this point of time.
@@ -118,7 +124,7 @@ export default function toDirectLineJS(
             handleAcknowledgementOnce = once(() => {
               const activityId = v4() as ActivityId;
 
-              observer.next({ ...activity, id: activityId });
+              observer.next(patchActivity({ ...activity, id: activityId }));
               resolvePostActivity(activityId);
             });
 
