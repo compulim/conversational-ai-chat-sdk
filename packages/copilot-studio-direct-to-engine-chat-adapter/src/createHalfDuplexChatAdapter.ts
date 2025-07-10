@@ -1,4 +1,4 @@
-import { boolean, object, optional, string, type InferInput } from 'valibot';
+import { boolean, minLength, object, optional, pipe, string, type InferInput } from 'valibot';
 import DirectToEngineChatAdapterAPI from './private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPI';
 import { directToEngineChatAdapterAPIInitSchema } from './private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIInit';
 import { type ExecuteTurnInit, type HalfDuplexChatAdapterAPI } from './private/types/HalfDuplexChatAdapterAPI';
@@ -9,6 +9,13 @@ type ExecuteTurnFunction = (activity: Activity, init?: ExecuteTurnInit | undefin
 
 const createHalfDuplexChatAdapterInitSchema = object({
   emitStartConversationEvent: optional(boolean('"emitStartConversationEvent" must be a boolean.')),
+  /** @deprecated Experimental */
+  experimental_resumeConversationId: optional(
+    pipe(
+      string('"resumeConversationId" must be of type string'),
+      minLength(1, '"resumeConversationId" must not be an empty string')
+    )
+  ),
   locale: optional(string('"locale" must be a string.')),
   retry: directToEngineChatAdapterAPIInitSchema.entries.retry,
   telemetry: directToEngineChatAdapterAPIInitSchema.entries.telemetry
@@ -53,10 +60,17 @@ export default function createHalfDuplexChatAdapter(
       telemetry: init.telemetry
     });
 
-    yield* api.startNewConversation({
-      emitStartConversationEvent: init.emitStartConversationEvent ?? true,
-      locale: init.locale
-    });
+    // TODO: Unsure if this is the best pattern for resuming a conversation.
+    //       When resuming a conversation, the caller will still need to go through the first and empty round of activities
+    //       After iterating the empty round, they will receive the executeTurn() function.
+    if (init.experimental_resumeConversationId) {
+      await api.experimental_resumeConversation({ conversationId: init.experimental_resumeConversationId });
+    } else {
+      yield* api.startNewConversation({
+        emitStartConversationEvent: init.emitStartConversationEvent ?? true,
+        locale: init.locale
+      });
+    }
 
     return createExecuteTurn(api, init);
   })();

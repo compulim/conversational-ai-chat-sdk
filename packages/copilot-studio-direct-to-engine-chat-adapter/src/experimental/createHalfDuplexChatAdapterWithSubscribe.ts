@@ -82,10 +82,20 @@ export default function createHalfDuplexChatAdapter(
       telemetry: init.telemetry
     });
 
-    yield* api.startNewConversation({
-      emitStartConversationEvent: init.emitStartConversationEvent ?? true,
-      locale: init.locale
-    });
+    // TODO: Unsure if this is the best pattern for resuming a conversation.
+    //       When resuming a conversation, the caller will still need to go through the first and empty round of activities
+    //       After iterating the empty round, they will receive the executeTurn() function.
+    if (init.experimental_resumeConversationId) {
+      await api.experimental_resumeConversation({
+        conversationId: init.experimental_resumeConversationId,
+        correlationId: init.telemetry?.correlationId
+      });
+    } else {
+      yield* api.startNewConversation({
+        emitStartConversationEvent: init.emitStartConversationEvent ?? true,
+        locale: init.locale
+      });
+    }
 
     return createExecuteTurn(api, init);
   })();

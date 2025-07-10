@@ -1,7 +1,7 @@
 import { EventSourceParserStream, type ParsedEvent } from 'eventsource-parser/stream';
 import { asyncGeneratorWithLastValue } from 'iter-fest';
 import pRetry, { type Options as PRetryOptions } from 'p-retry';
-import { maxValue, minValue, number, parse, pipe, safeParse } from 'valibot';
+import { maxValue, minLength, minValue, number, parse, pipe, safeParse, string } from 'valibot';
 import { parseBotResponse } from '../../../private/types/BotResponse';
 import { parseConversationId, type ConversationId } from '../../../private/types/ConversationId';
 import { type Activity } from '../../../types/Activity';
@@ -31,7 +31,7 @@ class APISession {
   #signal: AbortSignal | undefined;
   #telemetry: Telemetry | undefined;
 
-  get conversationId() {
+  get conversationId(): string | undefined {
     return this.#conversationId;
   }
 
@@ -271,6 +271,22 @@ class APISession {
         }
       }
     }.call(this);
+  }
+
+  /** @deprecated Experimental */
+  async experimental_resumeConversation(conversationId: string): Promise<void> {
+    if (this.#conversationId) {
+      const error = new Error('Conversation has already started, cannot resume conversation');
+
+      this.#telemetry?.trackException?.(error, { handledAt: 'APISession.experimental_resumeConversation' });
+
+      throw error;
+    }
+
+    this.#conversationId = parse(
+      pipe(string('"conversationId" must be a string'), minLength(1, '"conversationId" must not be an empty string')),
+      conversationId
+    );
   }
 }
 

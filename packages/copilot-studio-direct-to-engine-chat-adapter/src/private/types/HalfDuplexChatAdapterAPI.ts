@@ -6,6 +6,12 @@ export type StartNewConversationInit = {
   locale?: string | undefined;
 };
 
+/** @deprecated Experimental */
+export type ExperimentalResumeConversationInit = {
+  conversationId: string;
+  correlationId?: string | undefined;
+};
+
 export type ExecuteTurnInit = {
   correlationId?: string | undefined;
 };
@@ -13,4 +19,7 @@ export type ExecuteTurnInit = {
 export interface HalfDuplexChatAdapterAPI {
   startNewConversation(init: StartNewConversationInit): AsyncIterableIterator<Activity>;
   executeTurn(activity?: Activity | undefined): AsyncIterableIterator<Activity>;
+
+  /** @deprecated Experimental */
+  experimental_resumeConversation(init: ExperimentalResumeConversationInit): Promise<void>;
 }

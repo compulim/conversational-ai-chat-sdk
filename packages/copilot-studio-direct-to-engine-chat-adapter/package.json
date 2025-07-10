@@ -75,6 +75,7 @@
   },
   "devDependencies": {
     "@microsoft/applicationinsights-common": "^2.8.15",
+    "@testduet/given-when-then": "^0.1.0-main.334801c",
     "@testduet/wait-for": "^0.1.0",
     "@types/jest": "^29.5.3",
     "@types/uuid": "^9.0.7",

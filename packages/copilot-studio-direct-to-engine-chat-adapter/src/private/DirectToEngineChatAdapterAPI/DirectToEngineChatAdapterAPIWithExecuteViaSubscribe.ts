@@ -1,6 +1,9 @@
 import { parse } from 'valibot';
 import isAbortError from '../../private/isAbortError';
-import { type StartNewConversationInit } from '../../private/types/HalfDuplexChatAdapterAPI';
+import {
+  type ExperimentalResumeConversationInit,
+  type StartNewConversationInit
+} from '../../private/types/HalfDuplexChatAdapterAPI';
 import { type Activity } from '../../types/Activity';
 import { type Strategy } from '../../types/Strategy';
 import { type Telemetry } from '../../types/Telemetry';
@@ -101,6 +104,13 @@ export default class DirectToEngineChatAdapterAPIWithExecuteViaSubscribe extends
       // After first startNewConversation() is done, start the subscribe.
       this.#startSubscribe();
     }.call(this);
+  }
+
+  /** @deprecated Experimental */
+  public async experimental_resumeConversation(init: ExperimentalResumeConversationInit): Promise<void> {
+    await super.experimental_resumeConversation(init);
+
+    this.#startSubscribe();
   }
 
   public executeTurn(activity?: Activity | undefined): AsyncIterableIterator<Activity> {

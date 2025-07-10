@@ -1,5 +1,6 @@
 import { parse } from 'valibot';
 import {
+  type ExperimentalResumeConversationInit,
   type HalfDuplexChatAdapterAPI,
   type StartNewConversationInit
 } from '../../private/types/HalfDuplexChatAdapterAPI';
@@ -87,6 +88,25 @@ export class DirectToEngineChatAdapterAPIImpl implements HalfDuplexChatAdapterAP
         this.#busy = false;
       }
     }.call(this);
+  }
+
+  /** @deprecated Experimental */
+  public async experimental_resumeConversation(init: ExperimentalResumeConversationInit): Promise<void> {
+    if (this.#busy) {
+      const error = new Error('Another operation is in progress.');
+
+      this.#telemetry?.trackException?.(error, {
+        handledAt: 'DirectToEngineChatAdapterAPI.experimental_resumeConversation'
+      });
+
+      throw error;
+    }
+
+    this.#busy = true;
+
+    await this.#session.experimental_resumeConversation(init.conversationId);
+
+    this.#busy = false;
   }
 }
 
