@@ -29,7 +29,7 @@ export default function createFetchArguments(
       ? 'application/json,*/*;q=0.8'
       : 'text/event-stream,application/json;q=0.9,*/*;q=0.8'
   );
-  !headers.get('content-type') && headers.set('content-type', 'application/json');
+  !headers.has('content-type') && headers.set('content-type', 'application/json');
   headers.set(
     CHAT_ADAPTER_HEADER_NAME,
     new URLSearchParams([['version', NPM_PACKAGE_VERSION]] satisfies string[][]).toString()
