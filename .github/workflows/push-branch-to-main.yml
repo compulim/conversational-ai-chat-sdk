@@ -53,8 +53,6 @@ jobs:
       url: ${{ format('{0}/{1}/tree/{2}', github.server_url, github.repository, env.branch) }}
     name: Create release branch
     needs: prepare
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Set up Node.js ${{ env.node-version }}
