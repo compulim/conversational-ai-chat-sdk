@@ -15,4 +15,5 @@ export type Strategy = {
    * (This API is experimental and is expected to go away with a new replacement before General Availability.)
    */
   experimental_prepareSubscribeActivities?: (() => Promise<StrategyRequestInit>) | undefined;
+  emitTurnEndMarker?: boolean | undefined;
 };

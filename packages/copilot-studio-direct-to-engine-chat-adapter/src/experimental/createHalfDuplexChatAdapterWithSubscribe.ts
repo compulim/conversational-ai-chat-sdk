@@ -13,6 +13,7 @@ import {
 import { createHalfDuplexChatAdapterInitSchema } from '../createHalfDuplexChatAdapter';
 import DirectToEngineChatAdapterAPIWithExecuteViaSubscribe from '../private/DirectToEngineChatAdapterAPI/DirectToEngineChatAdapterAPIWithExecuteViaSubscribe';
 import { type ExecuteTurnInit, type HalfDuplexChatAdapterAPI } from '../private/types/HalfDuplexChatAdapterAPI';
+import yieldTurnEndMarkerIfEnabled from '../private/yieldTurnEndMarkerIfEnabled';
 import { type Activity } from '../types/Activity';
 import { type Strategy } from '../types/Strategy';
 
@@ -43,6 +44,7 @@ type CreateHalfDuplexChatAdapterWithSubscribeInit = InferInput<
 type TurnGenerator = AsyncGenerator<Activity, ExecuteTurnFunction, undefined>;
 
 const createExecuteTurn = (
+  strategy: Strategy,
   api: HalfDuplexChatAdapterAPI,
   init: CreateHalfDuplexChatAdapterWithSubscribeInit | undefined
 ): ExecuteTurnFunction => {
@@ -61,8 +63,9 @@ const createExecuteTurn = (
 
     return (async function* () {
       yield* api.executeTurn(activity);
+      yield* yieldTurnEndMarkerIfEnabled(strategy);
 
-      return createExecuteTurn(api, init);
+      return createExecuteTurn(strategy, api, init);
     })();
   };
 };
@@ -95,9 +98,10 @@ export default function createHalfDuplexChatAdapter(
         emitStartConversationEvent: init.emitStartConversationEvent ?? true,
         locale: init.locale
       });
+      yield* yieldTurnEndMarkerIfEnabled(strategy);
     }
 
-    return createExecuteTurn(api, init);
+    return createExecuteTurn(strategy, api, init);
   })();
 }
 
